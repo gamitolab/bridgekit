@@ -219,9 +219,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `CloseReason.replacingGraceMs` after the dead constant was removed, so the
   `iOS Facade` gate — which `release.yml` depends on — was red on every push to
   `main`. The interface files are back in sync with the source.
-- `paramsHash` now has golden-value tests computed with the Kotlin
-  implementation, so a divergence in the stream-multiplexing key fails in CI
-  instead of on a device.
+- `paramsHash` rendered every non-nil parameter as `Optional("value")` instead
+  of `value`, so any stream with a non-null parameter hashed differently on iOS
+  and Android. Values are now rendered like Kotlin does, and golden-value tests
+  computed with the Kotlin implementation pin the shared hash so a divergence in
+  the stream-multiplexing key fails in CI instead of on a device.
 
 **Runtime environment**
 

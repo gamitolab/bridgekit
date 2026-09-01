@@ -39,20 +39,26 @@ public func paramsHash(_ payload: [String: Any?]?) -> Int64 {
     return Int64(bitPattern: h)
 }
 
-/// Render an `Any?` value the same way Kotlin string interpolation does: null → "null".
+/// Render an `Any?` value the same way Kotlin string interpolation does: null → "null",
+/// everything else as the bare value.
 ///
-/// Swift `String(describing: Optional<Any>.none)` yields "nil", not "null".
-/// This helper fixes that divergence so hashes match Kotlin byte-for-byte.
+/// Two Swift-isms diverge from Kotlin here and both used to leak into the hash:
+/// `String(describing: Optional<Any>.none)` yields "nil", not "null", and interpolating
+/// a non-nil `Any?` yields `Optional("value")`, not `value`. The second one meant every
+/// stream with a non-null parameter hashed differently on iOS and Android; the golden
+/// tests in BridgeValueTests pin the Kotlin values.
 private func kotlinStringOf(_ value: Any??) -> String {
     // We receive Any?? because payload values are `Any?` (optional), and Swift wraps
     // them in another optional when passed to a function taking `Any?`.
-    guard let outer = value else {
+    guard let outer = value, let inner = outer else {
         return "null"
     }
-    // Detect Optional.none boxed inside Any — Mirror is the only reliable way.
-    let mirror = Mirror(reflecting: outer)
-    if mirror.displayStyle == .optional && mirror.children.isEmpty {
-        return "null"
+    // `inner` is Any, but it may still box an Optional (e.g. a `String?` stored as Any).
+    // Mirror is the only reliable way to see through that box.
+    let mirror = Mirror(reflecting: inner)
+    if mirror.displayStyle == .optional {
+        guard let child = mirror.children.first else { return "null" }
+        return String(describing: child.value)
     }
-    return "\(outer)"
+    return String(describing: inner)
 }
