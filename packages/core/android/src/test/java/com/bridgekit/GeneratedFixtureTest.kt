@@ -12,7 +12,6 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.*
 import org.junit.Before
-import org.junit.Ignore
 import org.junit.Test
 
 /**
@@ -186,10 +185,6 @@ class GeneratedFixtureTest {
 
     // ---- full router round trip -----------------------------------------------
 
-    @Ignore(
-        "QUARANTINED(WS-5): timing-sensitive under slow CI runners; " +
-            "StreamHub races tracked as RT-AND-03/RT-AND-04 - un-ignore when WS-5 fixes the hub"
-    )
     @Test
     fun `provide and router-level invoke works end-to-end`() = runTest {
         val impl = FakeConnectHostImpl(loggedIn = true)
