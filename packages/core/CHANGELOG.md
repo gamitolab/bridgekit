@@ -12,7 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
-## [0.1.0-alpha.1] - 2026-07-27
+## [0.1.0-alpha.1] - 2026-09-01
 
 ### Breaking
 
@@ -92,6 +92,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Declared `engines.node >= 22`.
 - The npm tarball no longer ships `android/src/test`. `android/src/main` and
   `android/build.gradle.kts` remain present for Gradle consumers.
+- The `pub:beta` / `pub:next` / `pub:release` scripts are gone. Publishing is
+  tag-driven through `.github/workflows/release.yml` (see `RELEASING.md`); the
+  scripts only existed to bypass it.
 
 ### Removed
 
@@ -186,6 +189,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - Readiness subscriptions were unstable across re-renders.
 
+**Android**
+
+- `StreamHub` started the upstream provider Flow before the first consumer's
+  `SharedFlow` subscription was registered. A provider that emits synchronously
+  could run ahead of the consumer that opened it: with `replay = 0` the head of
+  the stream was dropped, and a terminal emitted in that window was lost, so the
+  consumer hung. The upstream now starts from inside the consumer's collector
+  after `onSubscription`.
+- A hub entry whose upstream had terminated, or whose last consumer had left,
+  could be revived by the next `attach()` for the same key. The late consumer
+  received a stale terminal, or joined an entry that the cancelled upstream then
+  evicted. Entries are now closed exactly once and never revived; a later attach
+  gets a fresh entry and a fresh provider invocation, matching iOS.
+- A consumer that received a replayed terminal before `attach()` returned read an
+  uninitialised `lateinit` Job and threw `UninitializedPropertyAccessException`
+  into the engine scope. Consumers now end themselves from their own collector.
+- The 28 unit tests quarantined behind those races (`QUARANTINED(WS-5)`) are
+  un-quarantined; the Android suite executes 158/158.
+
 **iOS**
 
 - `Router.isFinalClosed` and `Router.readinessDelta` in the shipped Swift engine
@@ -193,6 +215,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   regressed on 2026-07-04 and stayed broken for 23 days because no CI job builds
   `packages/core/ios`. Both are fixed and the committed `ios-facade` XCFramework
   was regenerated from the repaired sources.
+- The committed `ios-facade` `.swiftinterface` files still declared
+  `CloseReason.replacingGraceMs` after the dead constant was removed, so the
+  `iOS Facade` gate — which `release.yml` depends on — was red on every push to
+  `main`. The interface files are back in sync with the source.
+- `paramsHash` now has golden-value tests computed with the Kotlin
+  implementation, so a divergence in the stream-multiplexing key fails in CI
+  instead of on a device.
 
 **Runtime environment**
 
