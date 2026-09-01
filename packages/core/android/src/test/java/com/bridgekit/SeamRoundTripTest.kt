@@ -23,7 +23,6 @@ import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
-import org.junit.Ignore
 import org.junit.Test
 
 /**
@@ -58,10 +57,6 @@ class SeamRoundTripTest {
      * Router dispatches to the real HardeningFixtureContract inbound adapter.
      * Assert the impl is called with id = "abc" and not a fabricated default.
      */
-    @Ignore(
-        "QUARANTINED(WS-5): timing-sensitive under slow CI runners; " +
-            "StreamHub races tracked as RT-AND-03/RT-AND-04 - un-ignore when WS-5 fixes the hub"
-    )
     @Test
     fun `Async JS-to-native — getUserById decodes payload and calls impl with correct id`() = runTest {
         var receivedId: String? = null
@@ -109,10 +104,6 @@ class SeamRoundTripTest {
      * JS fires notify (Void marker). The adapter routes to impl.notify().
      * Assert impl.notify() is called exactly once with the correct payload.
      */
-    @Ignore(
-        "QUARANTINED(WS-5): timing-sensitive under slow CI runners; " +
-            "StreamHub races tracked as RT-AND-03/RT-AND-04 - un-ignore when WS-5 fixes the hub"
-    )
     @Test
     fun `Void JS-to-native — notify fires impl exactly once with decoded params`() = runTest {
         var notifyCount = 0
@@ -202,10 +193,6 @@ class SeamRoundTripTest {
      * OutboundCallerImpl.fire() dispatches via the JS dispatcher without awaiting a result.
      * Assert the StubJsDispatcher records the invocation.
      */
-    @Ignore(
-        "QUARANTINED(WS-5): timing-sensitive under slow CI runners; " +
-            "StreamHub races tracked as RT-AND-03/RT-AND-04 - un-ignore when WS-5 fixes the hub"
-    )
     @Test
     fun `Void native-to-JS — fire dispatches to JS dispatcher asynchronously`() = runTest {
         router.connectDispatcher(emptyMap(), stub.asCallbacks())
@@ -246,7 +233,6 @@ class SeamRoundTripTest {
      * Native emits 3 items then completes. Assert StubJsDispatcher (acting as JS receiver)
      * received 3 onNext calls and 1 onEnd call.
      */
-    @Ignore("QUARANTINED(WS-5): timing-sensitive under slow CI runners; StreamHub races tracked as RT-AND-03/RT-AND-04 — un-ignore when WS-5 fixes the hub")
     @Test
     fun `Stream native-to-JS — emits 3 items then onEnd reaches JS`() = runTest {
         val received = mutableListOf<Map<String, Any?>>()
@@ -378,10 +364,6 @@ class SeamRoundTripTest {
      * decoder throws BridgeKitDecodeException; the Router maps it to VALIDATION_FAILED
      * and the provider is NOT dispatched with a fabricated default.
      */
-    @Ignore(
-        "QUARANTINED(WS-5): timing-sensitive under slow CI runners; " +
-            "StreamHub races tracked as RT-AND-03/RT-AND-04 - un-ignore when WS-5 fixes the hub"
-    )
     @Test
     fun `Async JS-to-native — missing required field returns VALIDATION_FAILED`() = runTest {
         var implCalled = false
@@ -421,21 +403,28 @@ class SeamRoundTripTest {
      * Two consumers subscribe to the same stream+params; assert the provider openStream
      * is called exactly once (not twice) and both consumers receive each emitted item.
      */
-    @Ignore("QUARANTINED(WS-5): timing-sensitive under slow CI runners; StreamHub races tracked as RT-AND-03/RT-AND-04 — un-ignore when WS-5 fixes the hub")
     @Test
     fun `W3-3 two consumers same params share one provider invocation`() = runTest {
-        var openStreamCallCount = 0
-        val received1 = mutableListOf<Map<String, Any?>>()
-        val received2 = mutableListOf<Map<String, Any?>>()
+        val openStreamCallCount = java.util.concurrent.atomic.AtomicInteger(0)
+        val received1 = java.util.concurrent.CopyOnWriteArrayList<Map<String, Any?>>()
+        val received2 = java.util.concurrent.CopyOnWriteArrayList<Map<String, Any?>>()
 
+        // The provider must not emit until both consumers are attached: multiplexing is
+        // a guarantee for consumers that share a LIVE stream, not for a consumer that
+        // arrives after a synchronously-completing provider already finished. Gating
+        // the emissions is what makes "exactly one invocation" a real assertion.
+        val bothAttached = kotlinx.coroutines.CompletableDeferred<Unit>()
         val ticks = listOf(TickStreamValue(10.0), TickStreamValue(20.0))
         val impl = object : HardeningFixture {
             override suspend fun getUserById(params: GetUserByIdParams) =
                 GetUserByIdResult("", "", 0.0)
             override fun notify(params: NotifyParams) {}
             override fun tickStream(): Flow<TickStreamValue> {
-                openStreamCallCount++
-                return kotlinx.coroutines.flow.flowOf(*ticks.toTypedArray())
+                openStreamCallCount.incrementAndGet()
+                return kotlinx.coroutines.flow.flow {
+                    bothAttached.await()
+                    for (tick in ticks) emit(tick)
+                }
             }
             override val status = MutableStateFlow("idle")
             override val count = MutableStateFlow(0.0)
@@ -455,6 +444,7 @@ class SeamRoundTripTest {
 
         router.openStream(env = env, onNext = { received1.add(it) }, onEnd = { end1Latch.countDown() })
         router.openStream(env = env, onNext = { received2.add(it) }, onEnd = { end2Latch.countDown() })
+        bothAttached.complete(Unit)
 
         assertTrue("Consumer 1 end received", end1Latch.await(3, java.util.concurrent.TimeUnit.SECONDS))
         assertTrue("Consumer 2 end received", end2Latch.await(3, java.util.concurrent.TimeUnit.SECONDS))
@@ -462,7 +452,7 @@ class SeamRoundTripTest {
         assertEquals(
             "Provider openStream must be called exactly once (multiplexing)",
             1,
-            openStreamCallCount,
+            openStreamCallCount.get(),
         )
         assertEquals("Consumer 1 receives all items", 2, received1.size)
         assertEquals("Consumer 2 receives all items", 2, received2.size)
@@ -471,10 +461,6 @@ class SeamRoundTripTest {
     /**
      * Two consumers with DIFFERENT params produce TWO separate provider invocations.
      */
-    @Ignore(
-        "QUARANTINED(WS-5): timing-sensitive under slow CI runners; " +
-            "StreamHub races tracked as RT-AND-03/RT-AND-04 - un-ignore when WS-5 fixes the hub"
-    )
     @Test
     fun `W3-3 two consumers different params use separate provider invocations`() = runTest {
         var openStreamCallCount = 0

@@ -11,11 +11,12 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeoutOrNull
 import org.junit.Assert.*
 import org.junit.Before
-import org.junit.Ignore
 import org.junit.Test
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CountDownLatch
@@ -58,7 +59,6 @@ class B3ConcurrencyEpochTest {
      * consumer attaches. When a consumer subscribes after completion it MUST receive
      * the terminal immediately and MUST NOT hang.
      */
-    @Ignore("QUARANTINED(WS-5): timing-sensitive under slow CI runners; StreamHub races tracked as RT-AND-03/RT-AND-04 — un-ignore when WS-5 fixes the hub")
     @Test(timeout = 10_000)
     fun `H-5a late consumer receives complete terminal after upstream already finished`() {
         val terminalLatch = CountDownLatch(1)
@@ -111,7 +111,6 @@ class B3ConcurrencyEpochTest {
      * Late consumer after upstream errors: stream errors before any consumer attaches.
      * Late consumer MUST receive an error terminal.
      */
-    @Ignore("QUARANTINED(WS-5): timing-sensitive under slow CI runners; StreamHub races tracked as RT-AND-03/RT-AND-04 — un-ignore when WS-5 fixes the hub")
     @Test(timeout = 10_000)
     fun `H-5b late consumer receives error terminal after upstream already errored`() {
         val engineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
@@ -174,10 +173,6 @@ class B3ConcurrencyEpochTest {
      *
      * A value-blind remove(key) in C3's upstream finally would evict C2's live entry.
      */
-    @Ignore(
-        "QUARANTINED(WS-5): timing-sensitive under slow CI runners; " +
-            "StreamHub races tracked as RT-AND-03/RT-AND-04 - un-ignore when WS-5 fixes the hub"
-    )
     @Test(timeout = 10_000)
     fun `H-6a value-aware remove does not evict live replacement entry`() {
         val engineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
@@ -238,8 +233,14 @@ class B3ConcurrencyEpochTest {
             onEnd = { liveItemLatch.countDown() }, // also unblock if unexpectedly terminated
         )
 
-        // Wait for live upstream to start collecting
+        // Wait for live upstream to start collecting. The latch fires before the flow
+        // subscribes to liveSource, and liveSource has replay = 0, so an emit before the
+        // subscription is registered is dropped: wait for the subscription itself.
         assertTrue("Live upstream must start", liveStartedLatch.await(3, TimeUnit.SECONDS))
+        assertNotNull(
+            "Live upstream must subscribe to liveSource within 2s",
+            runBlocking { withTimeoutOrNull(2_000) { liveSource.subscriptionCount.first { it > 0 } } },
+        )
 
         // Step 4: C3 attaches for the same key (also completing). When C3's upstream
         // completes, its finally fires hubs.remove(key, C3entry). Without value-aware remove,
@@ -274,7 +275,6 @@ class B3ConcurrencyEpochTest {
      * Uses a completing stream for c1 so the first entry is cleanly removed before
      * c2 attaches — verifying that c2 gets a fresh entry and receives items normally.
      */
-    @Ignore("QUARANTINED(WS-5): timing-sensitive under slow CI runners; StreamHub races tracked as RT-AND-03/RT-AND-04 — un-ignore when WS-5 fixes the hub")
     @Test(timeout = 5_000)
     fun `H-6b value-aware detach does not evict live replacement entry`() {
         val engineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
@@ -345,8 +345,14 @@ class B3ConcurrencyEpochTest {
             onEnd = {},
         )
 
-        // Wait for c2 upstream to start
+        // Wait for c2 upstream to start. The latch fires before the flow subscribes to
+        // source2, and source2 has replay = 0, so an emit before the subscription is
+        // registered is dropped: wait for the subscription itself.
         assertTrue("C2 upstream must start collecting", c2StartLatch.await(3, TimeUnit.SECONDS))
+        assertNotNull(
+            "C2 upstream must subscribe to source2 within 2s",
+            runBlocking { withTimeoutOrNull(2_000) { source2.subscriptionCount.first { it > 0 } } },
+        )
 
         // Emit on source2 — must reach c2
         runBlocking { source2.emit("from-source2") }
@@ -372,10 +378,6 @@ class B3ConcurrencyEpochTest {
      *
      * Note: CME may not reproduce deterministically — this is a regression gate.
      */
-    @Ignore(
-        "QUARANTINED(WS-5): timing-sensitive under slow CI runners; " +
-            "StreamHub races tracked as RT-AND-03/RT-AND-04 - un-ignore when WS-5 fixes the hub"
-    )
     @Test(timeout = 5_000)
     fun `H-7 concurrent registerStreamJob and cancelAllStreamJobs does not throw CME`() {
         val defn = stubDefinition("h7.concurrency.test")
@@ -532,10 +534,6 @@ class B3ConcurrencyEpochTest {
      * epochEnv=0 is accepted (pre-connection sentinel, no guard).
      * An invoke with epochEnv=1 on epoch=2 MUST be rejected.
      */
-    @Ignore(
-        "QUARANTINED(WS-5): timing-sensitive under slow CI runners; " +
-            "StreamHub races tracked as RT-AND-03/RT-AND-04 - un-ignore when WS-5 fixes the hub"
-    )
     @Test(timeout = 5_000)
     fun `epoch guard - stale invoke with epochEnv lt current epoch returns BRIDGE_NOT_READY`() {
         // Epoch 1
@@ -580,10 +578,6 @@ class B3ConcurrencyEpochTest {
     /**
      * epochEnv=0 is NOT rejected (pre-connection sentinel, no guard).
      */
-    @Ignore(
-        "QUARANTINED(WS-5): timing-sensitive under slow CI runners; " +
-            "StreamHub races tracked as RT-AND-03/RT-AND-04 - un-ignore when WS-5 fixes the hub"
-    )
     @Test(timeout = 5_000)
     fun `epoch guard - epochEnv=0 is NOT rejected (pre-connection or no epoch in envelope)`() {
         router.connectDispatcher(emptyMap(), fakeCallbacks()) // epoch 1
@@ -727,10 +721,6 @@ class B3ConcurrencyEpochTest {
     /**
      * openStream with stale epoch calls onEnd with BRIDGE_NOT_READY.
      */
-    @Ignore(
-        "QUARANTINED(WS-5): timing-sensitive under slow CI runners; " +
-            "StreamHub races tracked as RT-AND-03/RT-AND-04 - un-ignore when WS-5 fixes the hub"
-    )
     @Test(timeout = 3_000)
     fun `epoch guard - stale openStream with epochEnv lt current epoch calls onEnd with BRIDGE_NOT_READY`() {
         router.connectDispatcher(emptyMap(), fakeCallbacks()) // epoch 1

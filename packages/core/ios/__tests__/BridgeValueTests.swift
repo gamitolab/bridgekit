@@ -180,7 +180,25 @@ final class ParamsHashTests: XCTestCase {
         XCTAssertEqual(paramsHash([:]), 0)
     }
 
-    // TODO: back-fill golden values from Android round-trip proof run.
+    // Golden values computed with the Kotlin `paramsHash` in
+    // packages/core/android/src/main/java/com/bridgekit/core/Router.kt. This key is
+    // what multiplexes stream consumers, so both platforms must agree bit-for-bit.
+
+    func test_golden_singleStringValue_matchesKotlin() {
+        XCTAssertEqual(paramsHash(["key": "value"]), 207106176)
+    }
+
+    func test_golden_twoKeys_matchesKotlin() {
+        XCTAssertEqual(paramsHash(["b": "2", "a": "1"]), 1945817139)
+    }
+
+    func test_golden_nilValue_matchesKotlin() {
+        XCTAssertEqual(paramsHash(["key": nil]), 4053848438)
+    }
+
+    func test_golden_typicalEnvelope_matchesKotlin() {
+        XCTAssertEqual(paramsHash(["contractId": "example", "member": "doSomething"]), 4202698313)
+    }
 
     func test_singleStringValue_deterministicHash() {
         let h1 = paramsHash(["key": "value"])

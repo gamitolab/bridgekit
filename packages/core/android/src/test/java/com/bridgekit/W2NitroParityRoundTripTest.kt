@@ -22,7 +22,6 @@ import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
-import org.junit.Ignore
 import org.junit.Test
 
 /**
@@ -210,10 +209,6 @@ class W2NitroParityRoundTripTest {
         }
     }
 
-    @Ignore(
-        "QUARANTINED(WS-5): timing-sensitive under slow CI runners; " +
-            "StreamHub races tracked as RT-AND-03/RT-AND-04 - un-ignore when WS-5 fixes the hub"
-    )
     @Test
     fun `numeric enum inbound adapter returns enum member from impl`() = runTest {
         val impl = object : W2ParityTest {

@@ -13,7 +13,7 @@ runtime wire protocol exactly.
 ## Install
 
 ```sh
-pnpm add -D @malopezr7/bridgekit-cli@beta
+pnpm add -D @malopezr7/bridgekit-cli@alpha
 ```
 
 This exposes a `bridgekit` binary.

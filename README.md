@@ -6,7 +6,7 @@
 </p>
 
 <p align="center">
-  <a href="https://www.npmjs.com/package/@malopezr7/bridgekit"><img src="https://img.shields.io/npm/v/@malopezr7/bridgekit/beta.svg" alt="npm version" /></a>
+  <a href="https://www.npmjs.com/package/@malopezr7/bridgekit"><img src="https://img.shields.io/npm/v/@malopezr7/bridgekit/alpha.svg" alt="npm version" /></a>
   <img src="https://img.shields.io/badge/platforms-android%20%7C%20ios-blue.svg" alt="platforms" />
   <img src="https://img.shields.io/badge/license-MIT-green.svg" alt="license" />
 </p>
@@ -36,8 +36,8 @@ Kotlin **and** Swift bindings — interfaces, data classes, and codecs.
 
 | Platform | Status | Transport | Automated coverage |
 | -------- | ------ | --------- | ------------------ |
-| Android  | ✅ | Nitro (Kotlin runtime) | 158 unit tests, 130 executing |
-| iOS      | ✅ | Nitro (Swift runtime) | 50 engine tests + SDK typecheck |
+| Android  | ✅ | Nitro (Kotlin runtime) | 158 unit tests |
+| iOS      | ✅ | Nitro (Swift runtime) | 61 engine tests + SDK typecheck |
 | Web      | ✅ | In-memory loopback (tests) | 559 tests |
 
 > **Alpha.** The wire protocol is locked. The public API may still change before `1.0`.
@@ -47,10 +47,10 @@ Kotlin **and** Swift bindings — interfaces, data classes, and codecs.
 > invoke timeouts, state `replacing`/`lastKnown` delivery, seam encoding failures,
 > lock contention on sync providers, and Android's main-thread policy.
 >
-> They are not yet *identical*. iOS has no diagnostics module, 28 Android tests
-> remain quarantined behind two known StreamHub races, and the iOS engine's
-> locking strategy does not yet compile clean under the Swift 6 language mode.
-> These are tracked in `KNOWN_ISSUES.md`; none of them silently corrupt data.
+> They are not yet *identical*. iOS has no diagnostics module, and the iOS
+> engine's locking strategy does not yet compile clean under the Swift 6 language
+> mode. These are tracked in [`KNOWN_ISSUES.md`](KNOWN_ISSUES.md); none of them
+> silently corrupt data.
 >
 > Every number in the table above is produced by CI on each pull request. Before
 > `0.1.0-alpha.1`, nothing in CI compiled the iOS runtime at all — so treat any
@@ -73,8 +73,8 @@ minor line.
 ## Install
 
 ```sh
-pnpm add @malopezr7/bridgekit@beta react-native-nitro-modules
-pnpm add -D @malopezr7/bridgekit-cli@beta
+pnpm add @malopezr7/bridgekit@alpha react-native-nitro-modules
+pnpm add -D @malopezr7/bridgekit-cli@alpha
 cd ios && pod install   # iOS only; Android autolinks
 ```
 

@@ -13,17 +13,17 @@ Built on [Nitro Modules](https://nitro.margelo.com) for the native transport.
 | iOS      | ✅ Supported | Nitro (Swift runtime) |
 | Web      | ✅ Supported | In-memory loopback (no native code) |
 
-> Beta. The wire protocol is locked and the Android/iOS runtimes are at parity, but the
+> Alpha. The wire protocol is locked and the Android/iOS runtimes are at parity, but the
 > public API may still change before `1.0`.
 
 ## Installation
 
 ```sh
-# while in beta, install the @beta tag
-pnpm add @malopezr7/bridgekit@beta react-native-nitro-modules
+# while in alpha, install the @alpha tag
+pnpm add @malopezr7/bridgekit@alpha react-native-nitro-modules
 
 # codegen CLI (dev dependency)
-pnpm add -D @malopezr7/bridgekit-cli@beta
+pnpm add -D @malopezr7/bridgekit-cli@alpha
 ```
 
 BridgeKit is a Nitro module. After installing:
