@@ -97,10 +97,7 @@
     "nitrogen": "nitrogen && node scripts/patch-nitrogen-namespaces.js",
     "test": "pnpm test:web && pnpm test:native",
     "test:native": "jest --config ./jest.config.cjs --selectProjects native",
-    "test:web": "jest --config ./jest.config.cjs --selectProjects web",
-    "pub:beta": "pnpm publish --no-git-checks --access public --tag beta",
-    "pub:next": "pnpm publish --no-git-checks --access public --tag next",
-    "pub:release": "pnpm publish --access public"
+    "test:web": "jest --config ./jest.config.cjs --selectProjects web"
   },
   "engines": {
     "node": ">=22"
