@@ -134,14 +134,15 @@ export function assembleSwiftContractFile(parts: {
   stateInitials: string[];
   stateFlowEntries: string[];
   needsFoundationImport: boolean;
-  needsBridgeKitDecodeError: boolean;
-}): EmitResult {
-  const {
-    fileName,
-    id,
-    hash,
-    className,
-    codegenVersion,
+    needsBridgeKitDecodeError: boolean;
+    moduleName: string;
+  }): EmitResult {
+    const {
+      fileName,
+      id,
+      hash,
+      className,
+      codegenVersion,
     typeDecls,
     providerMethods,
     clientMethods,
@@ -155,6 +156,7 @@ export function assembleSwiftContractFile(parts: {
     stateFlowEntries,
     needsFoundationImport,
     needsBridgeKitDecodeError,
+    moduleName,
   } = parts;
 
   const lines: string[] = [];
@@ -164,7 +166,7 @@ export function assembleSwiftContractFile(parts: {
   lines.push(`// Contract: ${id}`);
   lines.push(`// Contract hash: ${hash}`);
   lines.push('');
-  lines.push('import BridgeKit');
+  lines.push(`import ${moduleName}`);
   if (needsFoundationImport) {
     lines.push('import Foundation');
   }
@@ -337,6 +339,7 @@ export function emitSwiftContract(
   token: RawContractToken,
   _contractPackage: string,
   resolvedClassName?: string,
+  moduleName: string = 'BridgeKit',
 ): EmitResult {
   const descriptor = token.descriptor;
   const id = descriptor.id;
@@ -696,6 +699,7 @@ export function emitSwiftContract(
     stateFlowEntries,
     needsFoundationImport,
     needsBridgeKitDecodeError,
+    moduleName,
   });
 }
 

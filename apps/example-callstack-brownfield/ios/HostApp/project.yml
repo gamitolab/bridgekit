@@ -26,6 +26,10 @@ name: HostApp
 # NOTE on XCFramework paths: the paths below assume package:ios output at the default
 # location ios/.brownfield/package/build/.  Adjust XCFRAMEWORKS_DIR if you relocate them.
 
+packages:
+  BridgeKit:
+    path: ../../../../packages/core
+
 options:
   bundleIdPrefix: com.bridgekit
   deploymentTarget:
@@ -63,8 +67,8 @@ targets:
         CURRENT_PROJECT_VERSION: "1"
         INFOPLIST_FILE: Info.plist
 
-        # HostApp is plain Swift + UIKit — no C++ interop needed here.
-        # BridgeKit types are exposed by ReactNativeFramework.xcframework.
+        # HostApp is plain Swift + UIKit. Public BridgeKit comes from the local
+        # Swift package; RN/Nitro live in the packaged XCFrameworks.
 
         OTHER_LDFLAGS:
           - "$(inherited)"
@@ -109,6 +113,8 @@ targets:
     # Source: Context7 /callstack/react-native-brownfield, "Package React Native App as XCFramework"
     # ---------------------------------------------------------------------------
     dependencies:
+      - package: BridgeKit
+        product: BridgeKit
       - framework: ../.brownfield/package/build/ReactNativeFramework.xcframework
         embed: true
       - framework: ../.brownfield/package/build/ReactBrownfield.xcframework

@@ -2,7 +2,7 @@
   "$schema": "https://nitro.margelo.com/nitro.schema.json",
   "cxxNamespace": ["BridgeKit"],
   "ios": {
-    "iosModuleName": "BridgeKit"
+    "iosModuleName": "BridgeKitNitro"
   },
   "android": {
     "androidNamespace": ["bridgekit"],

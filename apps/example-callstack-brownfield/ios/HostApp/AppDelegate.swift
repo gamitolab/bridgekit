@@ -1,3 +1,4 @@
+import BridgeKit
 import ReactNativeFramework
 import UIKit
 
@@ -28,9 +29,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
   ) -> Bool {
-    // Step 1: Register BridgeKit native providers BEFORE JS bundle loads.
-    // BridgekitDemoInitializer lives in ReactNativeFramework (not HostApp) because
-    // BridgeKit pod is linked into the framework target, not the host.
+    // Step 1: Register BridgeKit native providers on the HOST before JS starts.
+    // Public BridgeKit is a separate SPM module — not fused into BrownfieldLib.
     BridgekitDemoInitializer.configure()
 
     // Step 2 + 3: Wire brownfield runtime and start RN.

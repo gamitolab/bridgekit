@@ -64,6 +64,7 @@ public final class BridgeKitRuntime: BridgeKitApi {
 
     private func _installAsDelegate() {
         BridgeKitNative.shared.delegate = router
+        BKTransportInstallHooks(router)
     }
 
     // MARK: - provide

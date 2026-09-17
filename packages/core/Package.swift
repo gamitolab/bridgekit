@@ -1,17 +1,11 @@
 // swift-tools-version: 5.9
 
-// TEST-ONLY MANIFEST. This is not how BridgeKit is distributed.
+// Public BridgeKit module (pure Swift + the C/ObjC transport seam).
 //
-// Consumers get BridgeKit through CocoaPods (BridgeKit.podspec, resolved by React
-// Native autolinking). This manifest exists so the iOS engine can be unit-tested
-// at all: before it, packages/core/ios had zero executing tests, no test target
-// and no CI job, and two blocking compile errors sat on main for 23 days.
+// Brownfield hosts add this package and `import BridgeKit`. React Native apps
+// get the same sources through BridgeKit.podspec, pulled in by BridgeKitNitro.
 //
-// It works because the engine is pure Swift and Foundation-only. The four files
-// that import NitroModules — ios/nitro/* and runtime/AnyMapCodec.swift — are
-// excluded, because SPM cannot compile Swift and C-family sources in one target
-// and Nitro itself ships no SPM manifest. Those are covered by the xcframework
-// archive in .github/workflows/ios-facade.yml.
+// ios/nitro/* stays out: that is BridgeKitNitro (NitroModules / C++ / JSI).
 //
 // Nothing here depends on UIKit, so `swift test` runs natively on the host with
 // no simulator boot. That is the whole point: iOS test feedback in seconds.
@@ -26,14 +20,18 @@ let package = Package(
     ],
     targets: [
         .target(
+            name: "BridgeKitSeam",
+            path: "ios/seam",
+            publicHeadersPath: "."
+        ),
+        .target(
             name: "BridgeKit",
+            dependencies: ["BridgeKitSeam"],
             path: "ios",
             exclude: [
                 "__tests__",
-                // Requires NitroModules; see the note above.
                 "nitro",
-                "runtime/AnyMapCodec.swift",
-                // A stray header would make this a mixed-language target.
+                "seam",
                 "objc/BridgeKitObjC.h"
             ]
         ),

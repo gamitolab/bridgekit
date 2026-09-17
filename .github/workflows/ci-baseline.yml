@@ -109,7 +109,8 @@ jobs:
           grep -Fx "package/react-native.config.js" "$tmp/core-list.txt"
           grep -Fx "package/nitro.json" "$tmp/core-list.txt"
           grep -Fx "package/ios/engine/Router.swift" "$tmp/core-list.txt"
-          grep -Fx "package/nitrogen/generated/ios/BridgeKit+autolinking.rb" "$tmp/core-list.txt"
+          grep -Fx "package/nitrogen/generated/ios/BridgeKitNitro+autolinking.rb" "$tmp/core-list.txt"
+          grep -Fx "package/BridgeKitNitro.podspec" "$tmp/core-list.txt"
           grep -q "package/ios-facade/.*\.swiftinterface" "$tmp/core-list.txt"
 
           cli_tarball="$(cd packages/cli && npm pack --json --pack-destination "$tmp" | node -e "const c=require('fs').readFileSync(0,'utf8');const i=c.lastIndexOf('\n[');process.stdout.write(JSON.parse(c.slice(i>=0?i+1:c.indexOf('[')))[0].filename)")"

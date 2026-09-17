@@ -12,15 +12,14 @@ apps/example-callstack-brownfield/
 │   ├── Podfile                  ← CocoaPods for the RN workspace
 │   ├── .xcode.env               ← NODE_BINARY for script phases
 │   ├── ReactNativeFramework/    ← Framework target (packaged into XCFramework)
-│   │   ├── ReactNativeFramework.swift    ← public interface + @_exported import ReactBrownfield
-│   │   ├── bridgekit/
-│   │   │   └── BridgekitDemoInitializer.swift  ← BridgeKit provider registration (public)
-│   │   └── Generated/           ← codegen Swift contracts (pre-existing)
+│   │   └── ReactNativeFramework.swift    ← public interface + @_exported import ReactBrownfield
 │   ├── RNAppHost/               ← Thin shell target (CocoaPods anchor only, not shipped)
 │   ├── HostApp/                 ← Standalone native host (NO CocoaPods)
-│   │   ├── project.yml          ← xcodegen: HostApp.xcodeproj
-│   │   ├── AppDelegate.swift    ← Brownfield init + BridgeKit configure()
-│   │   ├── HomeViewController.swift  ← Native screen with "Open BridgeKit RN Demo" button
+│   │   ├── project.yml          ← xcodegen: HostApp.xcodeproj + local BridgeKit SPM
+│   │   ├── AppDelegate.swift    ← provide() then brownfield start
+│   │   ├── bridgekit/           ← BridgekitDemoInitializer (host provide)
+│   │   ├── Generated/           ← codegen Swift contracts
+│   │   ├── HomeViewController.swift
 │   │   ├── Info.plist
 │   │   ├── PrivacyInfo.xcprivacy
 │   │   └── LaunchScreen.storyboard
@@ -39,7 +38,8 @@ pnpm install
 # Generate the Xcode workspace project (ReactNativeFramework + RNAppHost targets)
 cd ios && xcodegen generate --spec project.yml
 
-# Install CocoaPods (resolves BridgeKit, NitroModules, ReactBrownfield pods)
+# Install CocoaPods (Nitro transport + RN). Public BridgeKit stays out of
+# the packaged framework via BRIDGEKIT_HOST_PROVIDES_RUNTIME=1.
 pod install
 ```
 
@@ -56,7 +56,7 @@ Output (default path): `ios/.brownfield/package/build/`
 
 | File | Contents |
 |------|----------|
-| `ReactNativeFramework.xcframework` | Your RN app + BridgeKit + bundle |
+| `ReactNativeFramework.xcframework` | Your RN app + BridgeKitNitro + bundle |
 | `ReactBrownfield.xcframework` | @callstack/react-native-brownfield runtime |
 | `hermesvm.xcframework` | Hermes JS engine (RN ≥ 0.82) |
 
@@ -70,6 +70,7 @@ open HostApp.xcodeproj
 In Xcode:
 - Select the `HostApp` target → General → Frameworks, Libraries, and Embedded Content
 - Verify the three xcframeworks from step 2 are listed as **Embed & Sign**
+- Verify the local Swift package `packages/core` product `BridgeKit` is linked
 - Build & Run on a simulator or device
 
 ## BridgeKit Initialization Order
@@ -92,16 +93,21 @@ AppDelegate.application(_:didFinishLaunchingWithOptions:)
            ↳ button tap → present ReactNativeViewController(moduleName: "BridgeKitCallstackBrownfield")
 ```
 
-## Why BridgekitDemoInitializer Lives in the Framework
+## Why BridgekitDemoInitializer Lives in HostApp
 
-BridgeKit (pod) and the Generated Swift contracts compile into `ReactNativeFramework`,
-not `HostApp`. Swift cannot call `BridgeKit` types from `HostApp` unless `HostApp` also
-links the pod — but the whole point of the XCFramework approach is that HostApp is
-Node-free and pod-free.
+Host native provides; JS consumes. Putting `provide()` inside the packaged RN
+framework was the bug: Callstack fuses pods into `BrownfieldLib`, and a C++/Nitro
+`import BridgeKit` then fails on the host (`NitroTypeInfo.hpp`, `SharedAnyMap`).
 
-Solution: `BridgekitDemoInitializer.configure()` is declared `public` inside the framework.
-HostApp imports `ReactNativeFramework` and calls the public function. The implementation
-stays inside the pod-linked framework.
+Public `BridgeKit` is C++-free. HostApp links it as a local Swift package
+(`packages/core`) and calls `BridgekitDemoInitializer.configure()` before
+`startReactNative`. The RN Podfile sets `BRIDGEKIT_HOST_PROVIDES_RUNTIME=1` so
+`BridgeKitNitro` does not fuse a second runtime into the XCFramework. The two
+sides meet through the process-wide `BKTransport` C seam.
+
+HostApp stays Node-free and pod-free. Callstack's CLI does not yet copy an
+arbitrary BridgeKit xcframework into `spm-artifacts/` (`KNOWN_ISSUES.md`
+BF-IOS-01); the local package path is the host recipe until that exists.
 
 ## API Verification Notes
 
