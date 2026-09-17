@@ -269,7 +269,10 @@ export class SwiftTypeEmitter {
           (v) => `    case ${escapeSwiftIdentifier(toSwiftEnumCase(v))} = ${swiftStringLiteral(v)}`,
         )
         .join('\n');
-      this.declarations.set(enumName, [`enum ${enumName}: String {`, cases, `}`].join('\n'));
+      this.declarations.set(
+        enumName,
+        [`enum ${enumName}: String, Sendable {`, cases, `}`].join('\n'),
+      );
     }
     return { typeName: nullable ? `${enumName}?` : enumName, declarations: [], nullable };
   }
@@ -280,7 +283,7 @@ export class SwiftTypeEmitter {
       const cases = enumNode.members
         .map((m) => `    case ${escapeSwiftIdentifier(m.name)} = ${m.value}`)
         .join('\n');
-      this.declarations.set(enumName, [`enum ${enumName}: Int {`, cases, `}`].join('\n'));
+      this.declarations.set(enumName, [`enum ${enumName}: Int, Sendable {`, cases, `}`].join('\n'));
     }
     return { typeName: nullable ? `${enumName}?` : enumName, declarations: [], nullable };
   }
@@ -295,7 +298,10 @@ export class SwiftTypeEmitter {
         const defaultPart = fieldType.nullable ? ' = nil' : '';
         fields.push(`    var ${escapedName}: ${fieldType.typeName}${defaultPart}`);
       }
-      this.declarations.set(structName, [`struct ${structName} {`, ...fields, `}`].join('\n'));
+      this.declarations.set(
+        structName,
+        [`struct ${structName}: Sendable {`, ...fields, `}`].join('\n'),
+      );
     }
     return { typeName: nullable ? `${structName}?` : structName, declarations: [], nullable };
   }
@@ -317,14 +323,17 @@ export class SwiftTypeEmitter {
           fields.push(`    var ${escapedName}: ${fieldType.typeName}${defaultPart}`);
         }
         if (fields.length > 0) {
-          structs.push([`struct ${variantTypeName} {`, ...fields, `}`].join('\n'));
+          structs.push([`struct ${variantTypeName}: Sendable {`, ...fields, `}`].join('\n'));
           cases.push(`    case ${escapeSwiftIdentifier(variantName)}(${variantTypeName})`);
         } else {
           cases.push(`    case ${escapeSwiftIdentifier(variantName)}`);
         }
       }
 
-      this.declarations.set(enumName, [`enum ${enumName} {`, ...cases, `}`, ...structs].join('\n'));
+      this.declarations.set(
+        enumName,
+        [`enum ${enumName}: Sendable {`, ...cases, `}`, ...structs].join('\n'),
+      );
     }
     return { typeName: nullable ? `${enumName}?` : enumName, declarations: [], nullable };
   }
@@ -337,7 +346,10 @@ export class SwiftTypeEmitter {
         const itemType = this.emit(tupleNode.items[i], `${structName}V${i}`);
         fields.push(`    var v${i}: ${itemType.typeName}`);
       }
-      this.declarations.set(structName, [`struct ${structName} {`, ...fields, `}`].join('\n'));
+      this.declarations.set(
+        structName,
+        [`struct ${structName}: Sendable {`, ...fields, `}`].join('\n'),
+      );
     }
     return { typeName: nullable ? `${structName}?` : structName, declarations: [], nullable };
   }
@@ -350,7 +362,7 @@ export class SwiftTypeEmitter {
         const optType = this.emit(oneOfNode.options[i], `${enumName}Opt${i}`);
         cases.push(`    case opt${i}(${optType.typeName})`);
       }
-      this.declarations.set(enumName, [`enum ${enumName} {`, ...cases, `}`].join('\n'));
+      this.declarations.set(enumName, [`enum ${enumName}: Sendable {`, ...cases, `}`].join('\n'));
     }
     return { typeName: nullable ? `${enumName}?` : enumName, declarations: [], nullable };
   }

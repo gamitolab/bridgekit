@@ -51,6 +51,31 @@ interface StateDescRaw {
 
 const CODEGEN_VERSION = '1';
 
+/**
+ * Swift `#if` must wrap a complete declaration. Splitting `class Foo {` across
+ * `#endif` then members is a parse error. Duplicate the type: Swift 6 gets
+ * `nonisolated` on the header (and on init/inbound/outbound); Swift 5 does not.
+ * `#if compiler(>=6)` is wrong: a Swift 6 toolchain in language mode 5 still
+ * has compiler≥6 and would emit `nonisolated` where it is illegal.
+ */
+function pushCompleteTypePair(
+  lines: string[],
+  headerSwift6: string,
+  headerSwift5: string,
+  inner: string[],
+  innerSwift6: string[] = inner,
+): void {
+  lines.push('#if swift(>=6.0)');
+  lines.push(headerSwift6);
+  for (const l of innerSwift6) lines.push(l);
+  lines.push('}');
+  lines.push('#else');
+  lines.push(headerSwift5);
+  for (const l of inner) lines.push(l);
+  lines.push('}');
+  lines.push('#endif');
+}
+
 /** Unwrap optional/nullable to the first structured/primitive inner node. */
 function unwrapWrappers(node: SchemaNode): SchemaNode {
   let inner = node;
@@ -191,141 +216,186 @@ export function assembleSwiftContractFile(parts: {
   lines.push('// ---- Provider protocol ------------------------------------------------------');
   lines.push('');
   lines.push(`/// Native-side implementation protocol for contract '${id}'.`);
-  lines.push(`protocol ${className}: AnyObject {`);
-  for (const m of providerMethods) lines.push(m);
-  lines.push(`}`);
+  pushCompleteTypePair(
+    lines,
+    `nonisolated protocol ${className}: AnyObject {`,
+    `protocol ${className}: AnyObject {`,
+    providerMethods,
+  );
   lines.push('');
 
   // Client protocol — same AnyObject constraint.
   lines.push('// ---- Client protocol --------------------------------------------------------');
   lines.push('');
   lines.push(`/// RN-side consumer protocol for contract '${id}'.`);
-  lines.push(`protocol ${className}Client: AnyObject {`);
-  for (const m of clientMethods) lines.push(m);
-  lines.push(`}`);
+  pushCompleteTypePair(
+    lines,
+    `nonisolated protocol ${className}Client: AnyObject {`,
+    `protocol ${className}Client: AnyObject {`,
+    clientMethods,
+  );
   lines.push('');
 
   // Codec enum (static functions)
   if (encodeDecodeFns.length > 0) {
     lines.push('// ---- Codecs ----------------------------------------------------------------');
     lines.push('');
-    lines.push(`private enum ${className}Codecs {`);
+    const codecInner: string[] = [];
     for (const fn of encodeDecodeFns) {
-      // indent each line by 4 spaces
-      for (const l of fn.split('\n')) lines.push(l === '' ? '' : `    ${l}`);
-      lines.push('');
+      for (const l of fn.split('\n')) codecInner.push(l === '' ? '' : `    ${l}`);
+      codecInner.push('');
     }
-    lines.push('}');
+    pushCompleteTypePair(
+      lines,
+      `nonisolated private enum ${className}Codecs {`,
+      `private enum ${className}Codecs {`,
+      codecInner,
+    );
     lines.push('');
   }
 
   // Contract definition
   lines.push('// ---- Contract definition ---------------------------------------------------');
   lines.push('');
-  lines.push(
-    `class ${className}Contract: BridgeContractDefinition<any ${className}, any ${className}Client> {`,
-  );
   // NOTE: id/contractHash/memberHashes are stored properties on the superclass.
   // We must NOT redeclare them as let — that causes a Swift compile error.
   // Instead pass them via super.init(id:contractHash:memberHashes:).
-  lines.push(`    init() {`);
-  lines.push(`        super.init(`);
-  lines.push(`            id: ${swiftStringLiteral(id)},`);
-  lines.push(`            contractHash: ${swiftStringLiteral(hash)},`);
-  lines.push(`            memberHashes: [`);
+  const hashLines: string[] = [];
+  hashLines.push(`        super.init(`);
+  hashLines.push(`            id: ${swiftStringLiteral(id)},`);
+  hashLines.push(`            contractHash: ${swiftStringLiteral(hash)},`);
+  hashLines.push(`            memberHashes: [`);
   for (let i = 0; i < memberHashPairs.length; i++) {
     const comma = i < memberHashPairs.length - 1 ? ',' : '';
-    lines.push(`                ${memberHashPairs[i]}${comma}`);
+    hashLines.push(`                ${memberHashPairs[i]}${comma}`);
   }
-  lines.push(`            ]`);
-  lines.push(`        )`);
-  lines.push(`    }`);
-  lines.push('');
-
-  // inbound — must override the open func from BridgeContractDefinition
-  lines.push(`    override func inbound(_ impl: any ${className}) -> InboundContractAdapter {`);
-  lines.push(`        return ${className}InboundAdapter(impl: impl)`);
-  lines.push(`    }`);
-  lines.push('');
-
-  // outbound — must override the open func from BridgeContractDefinition
-  lines.push(`    override func outbound(_ caller: OutboundCaller) -> any ${className}Client {`);
-  lines.push(`        return ${className}OutboundClient(caller: caller)`);
-  lines.push(`    }`);
-  lines.push(`}`);
+  hashLines.push(`            ]`);
+  hashLines.push(`        )`);
+  const contractInner = [
+    `    init() {`,
+    ...hashLines,
+    `    }`,
+    '',
+    `    override func inbound(_ impl: any ${className}) -> InboundContractAdapter {`,
+    `        return ${className}InboundAdapter(impl: impl)`,
+    `    }`,
+    '',
+    `    override func outbound(_ caller: OutboundCaller) -> any ${className}Client {`,
+    `        return ${className}OutboundClient(caller: caller)`,
+    `    }`,
+  ];
+  const contractInnerSwift6 = [
+    `    nonisolated init() {`,
+    ...hashLines,
+    `    }`,
+    '',
+    `    nonisolated override func inbound(_ impl: any ${className}) -> InboundContractAdapter {`,
+    `        return ${className}InboundAdapter(impl: impl)`,
+    `    }`,
+    '',
+    `    nonisolated override func outbound(_ caller: OutboundCaller) -> any ${className}Client {`,
+    `        return ${className}OutboundClient(caller: caller)`,
+    `    }`,
+  ];
+  pushCompleteTypePair(
+    lines,
+    `nonisolated class ${className}Contract: BridgeContractDefinition<any ${className}, any ${className}Client> {`,
+    `class ${className}Contract: BridgeContractDefinition<any ${className}, any ${className}Client> {`,
+    contractInner,
+    contractInnerSwift6,
+  );
   lines.push('');
 
   // Inbound adapter class
-  lines.push(`private class ${className}InboundAdapter: InboundContractAdapter {`);
-  lines.push(`    let impl: any ${className}`);
-  lines.push(`    init(impl: any ${className}) { self.impl = impl }`);
-  lines.push('');
-
+  const inboundInner: string[] = [];
+  inboundInner.push(`    let impl: any ${className}`);
+  inboundInner.push(`    init(impl: any ${className}) { self.impl = impl }`);
+  inboundInner.push('');
   if (stateInitials.length === 0) {
-    lines.push(`    var stateInitials: [String: Any?] { return [:] }`);
+    inboundInner.push(`    var stateInitials: [String: Any?] { return [:] }`);
   } else {
-    lines.push(`    var stateInitials: [String: Any?] { return [`);
-    for (const entry of stateInitials) lines.push(`        ${entry}`);
-    lines.push(`    ] }`);
+    inboundInner.push(`    var stateInitials: [String: Any?] { return [`);
+    for (const entry of stateInitials) inboundInner.push(`        ${entry}`);
+    inboundInner.push(`    ] }`);
   }
-  lines.push('');
-
-  lines.push(`    func invoke(member: String, payload: [String: Any?]?) async throws -> Any? {`);
-  lines.push(`        switch member {`);
+  inboundInner.push('');
+  inboundInner.push(
+    `    func invoke(member: String, payload: [String: Any?]?) async throws -> Any? {`,
+  );
+  inboundInner.push(`        switch member {`);
   for (const impl of inboundImpls) {
-    for (const l of impl.split('\n')) lines.push(`        ${l}`);
+    for (const l of impl.split('\n')) inboundInner.push(`        ${l}`);
   }
-  lines.push(`        default: throw BridgeKitDecodeError(field: "member", expectedType: member)`);
-  lines.push(`        }`);
-  lines.push(`    }`);
-  lines.push('');
-
-  lines.push(`    func invokeSync(member: String, payload: [String: Any?]?) throws -> Any? {`);
-  lines.push(`        switch member {`);
+  inboundInner.push(
+    `        default: throw BridgeKitDecodeError(field: "member", expectedType: member)`,
+  );
+  inboundInner.push(`        }`);
+  inboundInner.push(`    }`);
+  inboundInner.push('');
+  inboundInner.push(
+    `    func invokeSync(member: String, payload: [String: Any?]?) throws -> Any? {`,
+  );
+  inboundInner.push(`        switch member {`);
   for (const impl of syncImpls) {
-    for (const l of impl.split('\n')) lines.push(`        ${l}`);
+    for (const l of impl.split('\n')) inboundInner.push(`        ${l}`);
   }
-  lines.push(`        default: throw BridgeKitDecodeError(field: "member", expectedType: member)`);
-  lines.push(`        }`);
-  lines.push(`    }`);
-  lines.push('');
-
-  // openStream: protocol requires AsyncThrowingStream<Any?, Error>
-  lines.push(
+  inboundInner.push(
+    `        default: throw BridgeKitDecodeError(field: "member", expectedType: member)`,
+  );
+  inboundInner.push(`        }`);
+  inboundInner.push(`    }`);
+  inboundInner.push('');
+  inboundInner.push(
     `    func openStream(member: String, payload: [String: Any?]?) -> AsyncThrowingStream<Any?, Error> {`,
   );
-  lines.push(`        switch member {`);
+  inboundInner.push(`        switch member {`);
   for (const impl of streamImpls) {
-    for (const l of impl.split('\n')) lines.push(`        ${l}`);
+    for (const l of impl.split('\n')) inboundInner.push(`        ${l}`);
   }
-  lines.push(`        default: return AsyncThrowingStream { $0.finish() }`);
-  lines.push(`        }`);
-  lines.push(`    }`);
-  lines.push('');
-
-  // stateStreams(): protocol requires a function, not a computed property.
-  // Body reads from impl (the provider), not from caller (which is on the outbound side).
+  inboundInner.push(`        default: return AsyncThrowingStream { $0.finish() }`);
+  inboundInner.push(`        }`);
+  inboundInner.push(`    }`);
+  inboundInner.push('');
   if (stateFlowEntries.length === 0) {
-    lines.push(`    func stateStreams() -> [String: AsyncStream<Any?>] { return [:] }`);
+    inboundInner.push(`    func stateStreams() -> [String: AsyncStream<Any?>] { return [:] }`);
   } else {
-    lines.push(`    func stateStreams() -> [String: AsyncStream<Any?>] { return [`);
+    inboundInner.push(`    func stateStreams() -> [String: AsyncStream<Any?>] { return [`);
     for (let i = 0; i < stateFlowEntries.length; i++) {
       const comma = i < stateFlowEntries.length - 1 ? ',' : '';
-      lines.push(`        ${stateFlowEntries[i]}${comma}`);
+      inboundInner.push(`        ${stateFlowEntries[i]}${comma}`);
     }
-    lines.push(`    ] }`);
+    inboundInner.push(`    ] }`);
   }
-  lines.push(`}`);
+  const inboundInnerSwift6 = inboundInner.map((l) =>
+    l.startsWith('    init(impl:') ? `    nonisolated ${l.trimStart()}` : l,
+  );
+  pushCompleteTypePair(
+    lines,
+    `nonisolated private class ${className}InboundAdapter: InboundContractAdapter {`,
+    `private class ${className}InboundAdapter: InboundContractAdapter {`,
+    inboundInner,
+    inboundInnerSwift6,
+  );
   lines.push('');
 
   // Outbound client class
-  lines.push(`private class ${className}OutboundClient: ${className}Client {`);
-  lines.push(`    let caller: OutboundCaller`);
-  lines.push(`    init(caller: OutboundCaller) { self.caller = caller }`);
+  const outboundInner: string[] = [
+    `    let caller: OutboundCaller`,
+    `    init(caller: OutboundCaller) { self.caller = caller }`,
+  ];
   for (const impl of outboundImpls) {
-    for (const l of impl.split('\n')) lines.push(`    ${l}`);
+    for (const l of impl.split('\n')) outboundInner.push(`    ${l}`);
   }
-  lines.push(`}`);
+  const outboundInnerSwift6 = outboundInner.map((l) =>
+    l.startsWith('    init(caller:') ? `    nonisolated ${l.trimStart()}` : l,
+  );
+  pushCompleteTypePair(
+    lines,
+    `nonisolated private class ${className}OutboundClient: ${className}Client {`,
+    `private class ${className}OutboundClient: ${className}Client {`,
+    outboundInner,
+    outboundInnerSwift6,
+  );
 
   return {
     fileName,

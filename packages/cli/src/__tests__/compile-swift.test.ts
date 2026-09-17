@@ -110,6 +110,45 @@ function swiftcTypecheck(filePath: string) {
   );
 }
 
+function swiftcTypecheckSwift6MainActor(filePath: string) {
+  return spawnSync(
+    '/usr/bin/swiftc',
+    [
+      '-typecheck',
+      '-swift-version',
+      '6',
+      '-default-isolation=MainActor',
+      filePath,
+      '-sdk',
+      simulatorSdkPath(),
+      '-target',
+      'arm64-apple-ios15.0-simulator',
+    ],
+    { cwd: repoRoot, encoding: 'utf8' },
+  );
+}
+
+function writeGeneratedWithRuntimeStubs(generatedPath: string, destPath: string): void {
+  const generated = readFileSync(generatedPath, 'utf8').replace(/^import BridgeKit\n/m, '');
+  writeFileSync(destPath, `${swiftBridgeKitStubs()}\n${generated}`, 'utf8');
+}
+
+function expectSwift5AndSwift6MainActor(generatedPath: string): void {
+  const swift5 = swiftcTypecheck(generatedPath);
+  expect(swift5.status).toBe(0);
+
+  const workspace = makeWorkspace('swift6-mainactor');
+  const combined = path.join(workspace, 'GeneratedWithStubs.swift');
+  writeGeneratedWithRuntimeStubs(generatedPath, combined);
+  const swift6 = swiftcTypecheckSwift6MainActor(combined);
+  if (swift6.status !== 0) {
+    throw new Error(
+      `Swift 6 + MainActor typecheck failed (${swift6.status}):\n${swift6.stdout}\n${swift6.stderr}`,
+    );
+  }
+  expect(swift6.status).toBe(0);
+}
+
 function swiftcExecutable(sourcePath: string, outputPath: string) {
   return spawnSync('/usr/bin/swiftc', ['-parse-as-library', sourcePath, '-o', outputPath], {
     cwd: repoRoot,
@@ -128,13 +167,44 @@ const decodeErrorSourcePath = path.join(
   'packages/core/ios/runtime/BridgeKitDecodeError.swift',
 );
 
+function swift6NonisolatedRuntimeHelpers(src: string): string {
+  return src
+    .replaceAll(
+      'public struct BridgeKitDecodeError',
+      'nonisolated public struct BridgeKitDecodeError',
+    )
+    .replaceAll('@inline(__always)\npublic func ', '@inline(__always)\nnonisolated public func ')
+    .replaceAll('\npublic func ', '\nnonisolated public func ');
+}
+
 function swiftBridgeKitStubs(): string {
   const decodeErrorSource = readFileSync(decodeErrorSourcePath, 'utf8');
   return `
 import Foundation
 
+#if swift(>=6.0)
+${swift6NonisolatedRuntimeHelpers(decodeErrorSource)}
+#else
 ${decodeErrorSource}
+#endif
 
+#if swift(>=6.0)
+nonisolated public enum BridgeValue<T> {
+    case available(T)
+    case initial(T)
+    case replacing(T?)
+    case unprovided(T?)
+
+    public func remap<U>(_ transform: (T) -> U?) -> BridgeValue<U> {
+        switch self {
+        case .available(let value): return transform(value).map(BridgeValue<U>.available) ?? .unprovided(nil)
+        case .initial(let value): return transform(value).map(BridgeValue<U>.initial) ?? .unprovided(nil)
+        case .replacing(let last): return .replacing(last.flatMap(transform))
+        case .unprovided(let last): return .unprovided(last.flatMap(transform))
+        }
+    }
+}
+#else
 public enum BridgeValue<T> {
     case available(T)
     case initial(T)
@@ -150,7 +220,17 @@ public enum BridgeValue<T> {
         }
     }
 }
+#endif
 
+#if swift(>=6.0)
+nonisolated public protocol OutboundCaller: AnyObject {
+    func invoke(member: String, payload: [String: Any?]?) async throws -> Any?
+    func invokeSync(member: String, payload: [String: Any?]?) throws -> Any?
+    func fire(member: String, payload: [String: Any?]?)
+    func stream(member: String, payload: [String: Any?]?) -> AsyncThrowingStream<Any?, Error>
+    func state(member: String) -> AsyncStream<BridgeValue<Any?>>
+}
+#else
 public protocol OutboundCaller: AnyObject {
     func invoke(member: String, payload: [String: Any?]?) async throws -> Any?
     func invokeSync(member: String, payload: [String: Any?]?) throws -> Any?
@@ -158,7 +238,17 @@ public protocol OutboundCaller: AnyObject {
     func stream(member: String, payload: [String: Any?]?) -> AsyncThrowingStream<Any?, Error>
     func state(member: String) -> AsyncStream<BridgeValue<Any?>>
 }
+#endif
 
+#if swift(>=6.0)
+nonisolated public protocol InboundContractAdapter: AnyObject {
+    var stateInitials: [String: Any?] { get }
+    func invoke(member: String, payload: [String: Any?]?) async throws -> Any?
+    func invokeSync(member: String, payload: [String: Any?]?) throws -> Any?
+    func openStream(member: String, payload: [String: Any?]?) -> AsyncThrowingStream<Any?, Error>
+    func stateStreams() -> [String: AsyncStream<Any?>]
+}
+#else
 public protocol InboundContractAdapter: AnyObject {
     var stateInitials: [String: Any?] { get }
     func invoke(member: String, payload: [String: Any?]?) async throws -> Any?
@@ -166,7 +256,22 @@ public protocol InboundContractAdapter: AnyObject {
     func openStream(member: String, payload: [String: Any?]?) -> AsyncThrowingStream<Any?, Error>
     func stateStreams() -> [String: AsyncStream<Any?>]
 }
+#endif
 
+#if swift(>=6.0)
+nonisolated open class BridgeContractDefinition<P, C> {
+    public let id: String
+    public let contractHash: String
+    public let memberHashes: [String: String]
+    nonisolated public init(id: String, contractHash: String, memberHashes: [String: String]) {
+        self.id = id
+        self.contractHash = contractHash
+        self.memberHashes = memberHashes
+    }
+    nonisolated open func inbound(_ impl: P) -> InboundContractAdapter { fatalError("override required") }
+    nonisolated open func outbound(_ caller: OutboundCaller) -> C { fatalError("override required") }
+}
+#else
 open class BridgeContractDefinition<P, C> {
     public let id: String
     public let contractHash: String
@@ -179,6 +284,7 @@ open class BridgeContractDefinition<P, C> {
     open func inbound(_ impl: P) -> InboundContractAdapter { fatalError("override required") }
     open func outbound(_ caller: OutboundCaller) -> C { fatalError("override required") }
 }
+#endif
 `;
 }
 
@@ -385,9 +491,7 @@ describeOnMac('Swift real compiler harness', () => {
     const [swiftFile] = generatedSwiftFiles(outDir);
     expect(swiftFile).toBeDefined();
 
-    const result = swiftcTypecheck(swiftFile as string);
-
-    expect(result.status).toBe(0);
+    expectSwift5AndSwift6MainActor(swiftFile as string);
   });
 
   it('typechecks CLI-01 Swift enum result boundary decode', () => {
@@ -456,6 +560,35 @@ describeOnMac('Swift real compiler harness', () => {
       expect(result.status).toBe(0);
       expect(`${result.stdout}\n${result.stderr}`.trim()).toBe('');
     }
+  });
+
+  it('typechecks an N0c ping/dismiss/state contract in Swift 5 and Swift 6 + MainActor', () => {
+    const outDir = generateSwift(
+      {
+        'n0c.contract.ts': `import { defineContract, t } from '@malopezr7/bridgekit/contract';
+export const N0c = defineContract('compile.n0c', {
+  methods: {
+    ping: t.query(t.object({ nonce: t.string() }), t.object({ nonce: t.string() })),
+    dismiss: t.fire(t.object({ id: t.string() })),
+  },
+  state: {
+    ready: t.state(t.boolean(), false),
+  },
+});
+`,
+      },
+      'n0c',
+    );
+
+    const [swiftFile] = generatedSwiftFiles(outDir);
+    expect(swiftFile).toBeDefined();
+    const source = readFileSync(swiftFile as string, 'utf8');
+    expect(source).toContain('#if swift(>=6.0)');
+    expect(source).toContain('nonisolated');
+    expect(source).not.toContain('#if compiler');
+    expect(source).toContain('struct PingParams: Sendable');
+
+    expectSwift5AndSwift6MainActor(swiftFile as string);
   });
 
   it('typechecks CLI-04 Swift keyword and literal escaping fixture', () => {

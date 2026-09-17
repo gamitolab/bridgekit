@@ -12,6 +12,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+## [0.3.0-alpha.3] - 2026-09-18
+
+### Fixed
+
+- Generated Swift marks contract classes, `init`/`inbound`/`outbound`, adapters,
+  and provider/client protocols `nonisolated` under `#if swift(>=6.0)` so a
+  host with `SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor` can paste the file.
+  Each `#if` wraps a **complete** type (Swift cannot split `class Foo {` across
+  `#endif`). Swift 5 is unchanged. Do not use `#if compiler(>=6)` — a Swift 6
+  toolchain in language mode 5 would still emit `nonisolated` and fail.
+  Data structs/enums are `Sendable`.
+
 ## [0.3.0-alpha.2] - 2026-09-17
 
 ### Changed
