@@ -1,4 +1,4 @@
-package com.bridgekit.codec
+package com.margelo.nitro.bridgekit
 
 import com.margelo.nitro.core.AnyMap
 

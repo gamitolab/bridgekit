@@ -42,8 +42,8 @@ index.js                  AppRegistry.registerComponent("BridgeKitCallstackBrown
 src/                      shared demo UI + contracts (cloned from apps/example)
 metro/babel               bare RN toolchain (@react-native/metro-config, @react-native/babel-preset)
 ios/
-  ReactNativeFramework/    the packaged RN framework target (+ Generated/, bridgekit initializer)
-  HostApp/                 existing native app; imports the xcframeworks, presents RN
+  ReactNativeFramework/    the packaged RN framework target (Nitro transport only)
+  HostApp/                 existing native app; SPM BridgeKit + provide() + xcframeworks
   Podfile, project.yml, README.md
 android/
   reactnativeapp/          RN library module (brownfield-gradle-plugin) → AAR to mavenLocal
@@ -56,11 +56,10 @@ android/
 ## Brownfield wiring — the bits that matter
 
 - **iOS**: the RN code lives in a Framework target (`use_frameworks! :linkage => :static`,
-  `inherit! :complete`). This example keeps `BridgekitDemoInitializer.configure()` *inside* the
-  packaged framework so the Node-free host can call it. That is a static-packaging demo trick,
-  not the product rule. A real host should `import BridgeKit` (Swift module visible; Callstack
-  hosts typically re-export with `@_exported import BridgeKit`) and provide native implementations
-  itself — JS consumes, native of the host provides.
+  `inherit! :complete`, `BRIDGEKIT_HOST_PROVIDES_RUNTIME=1`). HostApp links public
+  `BridgeKit` as a local Swift package and calls `BridgekitDemoInitializer.configure()`
+  before `startReactNative`. JS consumes; the host provides. Do not `@_exported import`
+  BridgeKit from the RN framework — that fuses Nitro/C++ into the host module.
 - The host's `AppDelegate` calls the initializer before
   `ReactNativeBrownfield.shared.startReactNative(...)`, then presents
   `ReactNativeViewController(moduleName: "BridgeKitCallstackBrownfield")`.

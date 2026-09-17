@@ -1,14 +1,14 @@
 // HybridBridgeStreams.swift
 // BridgeKit iOS — Nitro Hybrid implementation for BridgeStreams.
 //
-// CLASS NAME: MUST be HybridBridgeStreams — BridgeKitAutolinking.swift instantiates by exact name.
+// CLASS NAME: MUST be HybridBridgeStreams — BridgeKitNitroAutolinking.swift instantiates by exact name.
 //
 // Requires @_implementationOnly import NitroModules (only available inside the pod build).
 
 @_implementationOnly import NitroModules
 
 /// Nitro Hybrid implementation for BridgeStreams.
-/// Delegates all operations to `BridgeKitNative.shared.delegate`.
+/// Delegates all operations to the process-wide BKTransport seam.
 final class HybridBridgeStreams: HybridBridgeStreamsSpec {
 
     // `override` (not `required`) — HybridBridgeStreamsSpec_base.init() is not required.
@@ -41,19 +41,19 @@ final class HybridBridgeStreams: HybridBridgeStreamsSpec {
             onEnd(fallback)
         }
 
-        return BridgeKitNative.shared.delegate.openStream(
-            env: AnyMapCodec.fromAnyMap(env),
-            onNext: { valueMap in
+        return BKTransportOpenStream(
+            NSDict.fromMap(AnyMapCodec.fromAnyMap(env)),
+            { valueNS in
+                let valueMap = NSDict.toMap(valueNS)
                 guard !terminal.isTerminated else { return }
                 do {
                     onNext(try AnyMapCodec.toAnyMap(valueMap))
                 } catch {
-                    // Terminating beats a silent gap: the consumer learns the
-                    // stream is broken instead of quietly missing a value.
                     endWithEncodingFailure(context: "stream value", error: error)
                 }
             },
-            onEnd: { endMap in
+            { endNS in
+                let endMap = NSDict.toMap(endNS)
                 do {
                     let nitroEnd = try AnyMapCodec.toAnyMap(endMap)
                     guard terminal.claim() else { return }
@@ -62,7 +62,7 @@ final class HybridBridgeStreams: HybridBridgeStreamsSpec {
                     endWithEncodingFailure(context: "stream end", error: error)
                 }
             }
-        )
+        ) as String
     }
 
     // MARK: - close
@@ -70,7 +70,7 @@ final class HybridBridgeStreams: HybridBridgeStreamsSpec {
     /// Cancel a native→JS stream from the JS side.
     /// `throws` is present in the generated protocol signature; this impl never throws.
     func close(streamId: String) throws -> Void {
-        BridgeKitNative.shared.delegate.closeStream(streamId: streamId)
+        BKTransportCloseStream(streamId)
     }
 
     // MARK: - emitFromJs
@@ -78,10 +78,7 @@ final class HybridBridgeStreams: HybridBridgeStreamsSpec {
     /// Push a value from the JS producer to the native consumer.
     /// value follows the { v: <encoded-value> } wire rule.
     func emitFromJs(streamId: String, value: AnyMap) throws -> Void {
-        BridgeKitNative.shared.delegate.emitFromJs(
-            streamId: streamId,
-            value: AnyMapCodec.fromAnyMap(value)
-        )
+        BKTransportEmitFromJs(streamId, NSDict.fromMap(AnyMapCodec.fromAnyMap(value)))
     }
 
     // MARK: - endFromJs
@@ -89,9 +86,6 @@ final class HybridBridgeStreams: HybridBridgeStreamsSpec {
     /// Signal end-of-stream from the JS producer.
     /// end is a ResultEnvelope map.
     func endFromJs(streamId: String, end: AnyMap) throws -> Void {
-        BridgeKitNative.shared.delegate.endFromJs(
-            streamId: streamId,
-            end: AnyMapCodec.fromAnyMap(end)
-        )
+        BKTransportEndFromJs(streamId, NSDict.fromMap(AnyMapCodec.fromAnyMap(end)))
     }
 }

@@ -10,6 +10,16 @@ version, so the changelog and this file agree on what a given release contains.
 
 ## Open
 
+### BF-IOS-01 — Callstack `package:ios` still needs a host-side Swift package
+
+The public `BridgeKit` module is C++-free. Getting it into a Node-free host is
+done by adding `packages/core` as a local Swift package (see
+`apps/example-callstack-brownfield/ios/HostApp`). Callstack's CLI does not yet
+copy an arbitrary xcframework into `spm-artifacts/` the way it copies
+`ExpoModulesCore`. A `BRIDGEKIT_HOST_PROVIDES_RUNTIME=1` Podfile env keeps the
+public module out of `BrownfieldLib` so there is one runtime. Upstream issue
+for copying extra xcframeworks is not filed in this change.
+
 ### RT-IOS-01 — iOS has no diagnostics module
 
 Android exposes `BridgeKitDiagnostics` (structured logcat traces, drop and

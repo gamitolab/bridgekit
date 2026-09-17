@@ -12,6 +12,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+## [0.3.0-alpha.1] - 2026-09-17
+
+### Added
+
+- `bridgekit generate --module <Name>` sets the Swift `import` (default `BridgeKit`).
+
 ## [0.2.0-alpha.1] - 2026-09-17
 
 ### Changed

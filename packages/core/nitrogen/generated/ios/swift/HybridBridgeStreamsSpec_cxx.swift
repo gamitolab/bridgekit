@@ -19,7 +19,7 @@
 @_spi(BridgeKitNitro) public class HybridBridgeStreamsSpec_cxx {
   /**
    * The Swift <> C++ bridge's namespace (`margelo::nitro::BridgeKit::bridge::swift`)
-   * from `BridgeKit-Swift-Cxx-Bridge.hpp`.
+   * from `BridgeKitNitro-Swift-Cxx-Bridge.hpp`.
    * This contains specialized C++ templates, and C++ helper functions that can be accessed from Swift.
    */
   public typealias bridge = margelo.nitro.BridgeKit.bridge.swift

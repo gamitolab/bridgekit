@@ -11,33 +11,22 @@ Pod::Spec.new do |s|
   s.authors      = package["author"]
 
   s.platforms    = { :ios => "15.1" }
-  # Release tags are package-scoped (see RELEASING.md): the core package ships as
-  # `core-vX.Y.Z`, not a bare version, so a git-sourced pod must ask for that.
   s.source       = { :git => "https://github.com/malopezr7/bridgekit.git", :tag => "core-v#{s.version}" }
 
-  s.source_files = "ios/**/*.{h,m,mm,swift}"
-  s.exclude_files = "ios/__tests__/**/*"
+  # Public Swift API + the C/ObjC transport seam implementation.
+  # No Nitro, no JSI, no C++. A brownfield host can import this module.
+  s.source_files = [
+    "ios/engine/**/*.{h,m,swift}",
+    "ios/runtime/**/*.{h,m,swift}",
+    "ios/objc/**/*.{h,m,swift}",
+    "ios/seam/**/*.{h,m,swift}"
+  ]
+  s.public_header_files = "ios/seam/BKTransport.h"
+  s.exclude_files = "ios/__tests__/**/*", "ios/objc/BridgeKitObjC.h"
   s.requires_arc = true
 
-  load 'nitrogen/generated/ios/BridgeKit+autolinking.rb'
-  add_nitrogen_files(s)
-
-  # Nitrogen already sets C++20, objcxx interop, DEFINES_MODULE, and
-  # SWIFT_INSTALL_OBJC_HEADER=NO (required on Xcode 26.4+ / 27 static linkage).
-  # Force libc++ and keep the module in C++/ObjC++ — compiling the Clang module
-  # as C makes Nitro 0.37's <regex> include fail with:
-  #   NitroTypeInfo.hpp: #include <regex> file not found
-  #   could not build Objective-C module 'BridgeKit'
-  current_xcconfig = s.attributes_hash['pod_target_xcconfig'] || {}
-  s.pod_target_xcconfig = current_xcconfig.merge(
-    'CLANG_CXX_LANGUAGE_STANDARD' => 'c++20',
-    'CLANG_CXX_LIBRARY' => 'libc++',
-    'SWIFT_OBJC_INTEROP_MODE' => 'objcxx',
-    'DEFINES_MODULE' => 'YES',
-    'SWIFT_INSTALL_OBJC_HEADER' => 'NO'
-  )
-
-  s.dependency 'React-jsi'
-  s.dependency 'React-callinvoker'
-  install_modules_dependencies(s)
+  s.pod_target_xcconfig = {
+    "DEFINES_MODULE" => "YES",
+    "SWIFT_INSTALL_OBJC_HEADER" => "NO"
+  }
 end

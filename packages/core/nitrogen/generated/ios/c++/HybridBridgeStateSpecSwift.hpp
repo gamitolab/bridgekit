@@ -10,7 +10,7 @@
 #include "HybridBridgeStateSpec.hpp"
 
 // Forward declaration of `HybridBridgeStateSpec_cxx` to properly resolve imports.
-namespace BridgeKit { class HybridBridgeStateSpec_cxx; }
+namespace BridgeKitNitro { class HybridBridgeStateSpec_cxx; }
 
 
 
@@ -18,7 +18,7 @@ namespace BridgeKit { class HybridBridgeStateSpec_cxx; }
 #include <string>
 #include <functional>
 
-#include "BridgeKit-Swift-Cxx-Umbrella.hpp"
+#include "BridgeKitNitro-Swift-Cxx-Umbrella.hpp"
 
 namespace margelo::nitro::BridgeKit {
 
@@ -35,13 +35,13 @@ namespace margelo::nitro::BridgeKit {
   class HybridBridgeStateSpecSwift: public virtual HybridBridgeStateSpec {
   public:
     // Constructor from a Swift instance
-    explicit HybridBridgeStateSpecSwift(const ::BridgeKit::HybridBridgeStateSpec_cxx& swiftPart):
+    explicit HybridBridgeStateSpecSwift(const BridgeKitNitro::HybridBridgeStateSpec_cxx& swiftPart):
       HybridObject(HybridBridgeStateSpec::TAG),
       _swiftPart(swiftPart) { }
 
   public:
     // Get the Swift part
-    inline ::BridgeKit::HybridBridgeStateSpec_cxx& getSwiftPart() noexcept {
+    inline BridgeKitNitro::HybridBridgeStateSpec_cxx& getSwiftPart() noexcept {
       return _swiftPart;
     }
 
@@ -100,7 +100,7 @@ namespace margelo::nitro::BridgeKit {
     }
 
   private:
-    ::BridgeKit::HybridBridgeStateSpec_cxx _swiftPart;
+    BridgeKitNitro::HybridBridgeStateSpec_cxx _swiftPart;
   };
 
 } // namespace margelo::nitro::BridgeKit

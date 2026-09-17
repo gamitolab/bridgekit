@@ -37,7 +37,7 @@ Kotlin **and** Swift bindings — interfaces, data classes, and codecs.
 | Platform | Status | Transport | Automated coverage |
 | -------- | ------ | --------- | ------------------ |
 | Android  | ✅ | Nitro (Kotlin runtime) | 158 unit tests |
-| iOS      | ✅ | Nitro (Swift runtime) | 61 engine tests + SDK typecheck |
+| iOS      | ✅ | Nitro (Swift runtime) | 54 engine tests + SDK typecheck |
 | Web      | ✅ | In-memory loopback (tests) | 559 tests |
 
 > **Alpha.** The wire protocol is locked. The public API may still change before `1.0`.
@@ -77,8 +77,9 @@ pnpm add -D @malopezr7/bridgekit-cli@alpha
 cd ios && pod install   # iOS only; Android autolinks
 ```
 
-See the [core package README](packages/core/README.md) for the full Marker API,
-React integration, scoping, testing, and diagnostics.
+See the [core package README](packages/core/README.md) for the Marker API,
+React integration, scoping, testing, diagnostics, and **brownfield
+(Callstack / Expo)** host setup (`import BridgeKit` on the native host).
 
 ## Development
 

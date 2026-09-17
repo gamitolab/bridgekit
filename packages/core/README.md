@@ -35,6 +35,31 @@ BridgeKit is a Nitro module. After installing:
 The host app pins RN and Nitro; this package does not. Dev builds in this repo
 use React Native `0.86.3` and `react-native-nitro-modules` `0.37.1`.
 
+## Brownfield (Callstack / Expo)
+
+The public module is **pure Swift** (`import BridgeKit`). Nitro/C++ lives in
+`BridgeKitNitro` and is autolinked into the RN bundle. A Callstack host never
+imports Nitro and never puts `provide()` inside the packaged RN framework.
+
+1. `pnpm add @malopezr7/bridgekit@alpha react-native-nitro-modules`
+2. Generate host contracts: `bridgekit generate --platform swift --out-dir ios/HostApp/Generated`
+3. Package RN: `pnpm package:ios` (set `BRIDGEKIT_HOST_PROVIDES_RUNTIME=1` in the RN Podfile)
+4. In the **host** Xcode project: add the `packages/core` Swift package, then:
+
+```swift
+import BridgeKit
+
+func application(...) -> Bool {
+  BridgekitDemoInitializer.configure() // your provide()s, generated contracts
+  ReactNativeBrownfield.shared.startReactNative(...)
+  return true
+}
+```
+
+No Podfile in the host. No `NSClassFromString`. Expo *integrated* brownfield
+keeps both pods in the same app target — `import BridgeKit` still works there
+because the public pod is in-process.
+
 ## Entry points
 
 | Import | Contents |

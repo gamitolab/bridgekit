@@ -8,9 +8,9 @@ function processFile(filePath) {
   const originalContent = content;
 
   if (filePath.endsWith('.swift')) {
-    // Hide Nitro from BridgeKit's public Swift module interface.  Nitrogen's
-    // Swift/C++ bridge still needs the generated Swift symbols in BridgeKit-Swift.h,
-    // so generated bridge types are exported as SPI instead of public API.
+    // Generated Swift lives in BridgeKitNitro. Keep Nitro off the module's
+    // public interface; Nitrogen's Swift/C++ bridge still needs the symbols,
+    // so they are exported as SPI instead of public API.
     content = content.replace(/(?<!@_implementationOnly )import NitroModules/g, '@_implementationOnly import NitroModules');
     content = content.replace(/^public final class /gm, '@_spi(BridgeKitNitro) public final class ');
     content = content.replace(/^public protocol /gm, '@_spi(BridgeKitNitro) public protocol ');
@@ -18,8 +18,9 @@ function processFile(filePath) {
     content = content.replace(/^public typealias /gm, '@_spi(BridgeKitNitro) public typealias ');
   } else {
     // Replace non-namespaced Swift wrapper references with globally namespaced ones.
-    // Example: `const BridgeKit::HybridBridgeHostSpec_cxx&` -> `const ::BridgeKit::HybridBridgeHostSpec_cxx&`
+    // Example: `const BridgeKitNitro::HybridBridgeHostSpec_cxx&` -> `const ::BridgeKitNitro::HybridBridgeHostSpec_cxx&`
     // The negative lookbehind prevents double-prefixing already-qualified names.
+    content = content.replace(/(?<!:)\bBridgeKitNitro::/g, '::BridgeKitNitro::');
     content = content.replace(/(?<!:)\bBridgeKit::/g, '::BridgeKit::');
   }
 

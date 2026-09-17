@@ -6,18 +6,11 @@ import Foundation
 // apps/example/ios/BridgeKitExample/bridgekit/BridgekitDemoInitializer.swift
 // (verified 2026-06-18 from source-of-truth reference).
 //
-// WHY it lives here (in the framework, not the host):
-//   The BridgeKit pod and the generated Swift contracts are resolved into the
-//   ReactNativeFramework CocoaPods target (via `inherit! :complete`).  Swift
-//   cannot import BridgeKit from a type that lives in a separate target unless
-//   that target also links BridgeKit.  Since the host app does NOT link the
-//   BridgeKit pod directly, the initializer must compile inside the framework.
+// Lives in the HOST app. Public BridgeKit is linked via SPM; the packaged
+// RN framework only contains BridgeKitNitro (JSI/C++).
 //
-// HOW the host calls it:
-//   `BridgekitDemoInitializer.configure()` is declared `public` so the host
-//   app's AppDelegate can call it after importing ReactNativeFramework.
-//   It MUST be called before `ReactNativeBrownfield.shared.startReactNative(...)`,
-//   i.e. before the JS bundle executes — mirrors Android's MainApplication.onCreate().
+// Call BEFORE ReactNativeBrownfield.shared.startReactNative(...) so JS
+// consumers find native providers on first resolve.
 //
 // SOURCE OF TRUTH: apps/example/ios/BridgeKitExample/bridgekit/BridgekitDemoInitializer.swift
 // ---------------------------------------------------------------------------

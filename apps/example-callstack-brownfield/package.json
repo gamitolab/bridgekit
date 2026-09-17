@@ -10,7 +10,7 @@
     "package:android": "brownfield package:android --variant Release --module-name reactnativeapp",
     "publish:android": "brownfield publish:android --module-name reactnativeapp",
     "generate": "node ../../packages/cli/dist/index.js generate --contracts \"src/demo/contracts/*.contract.ts\" --out-dir android/reactnativeapp/src/main/java/com/bridgekit/callstackbrownfield/generated --platform kotlin --package com.bridgekit.callstackbrownfield.generated",
-    "generate:ios": "node ../../packages/cli/dist/index.js generate --contracts \"src/demo/contracts/*.contract.ts\" --out-dir ios/ReactNativeFramework/Generated --platform swift"
+    "generate:ios": "node ../../packages/cli/dist/index.js generate --contracts \"src/demo/contracts/*.contract.ts\" --out-dir ios/HostApp/Generated --platform swift"
   },
   "dependencies": {
     "@callstack/react-native-brownfield": "5.1.0",

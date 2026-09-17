@@ -12,6 +12,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+## [0.3.0-alpha.1] - 2026-09-17
+
+### Breaking
+
+- iOS is two modules: `BridgeKit` (pure Swift/ObjC public API) and
+  `BridgeKitNitro` (JSI/C++ transport). Host apps `import BridgeKit` and never
+  import Nitro. Autolinking pulls `BridgeKitNitro`, which depends on `BridgeKit`
+  unless `BRIDGEKIT_HOST_PROVIDES_RUNTIME=1` (Callstack brownfield).
+- Android `AnyMapCodec` moved to `com.margelo.nitro.bridgekit` (Nitro layer).
+
+### Added
+
+- Process-wide `BKTransport` seam so a brownfield host runtime and a fused
+  Nitro transport can meet without sharing a Swift module.
+- `bridgekit generate --module <Name>` for Swift output (default `BridgeKit`).
+
 ## [0.2.0-alpha.1] - 2026-09-17
 
 ### Breaking

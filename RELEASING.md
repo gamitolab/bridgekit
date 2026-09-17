@@ -13,7 +13,7 @@ Bump the major when BridgeKit itself breaks.
 ### Pre-stable line
 
 Before the first stable release BridgeKit ships on the `0.x` line. The current
-line is `0.2.0-alpha.N`, and it deliberately does not continue the earlier
+line is `0.3.0-alpha.N`, and it deliberately does not continue the earlier
 `0.0.1-beta.x` numbering:
 
 - The contract hash and wire format changed between the two lines with no

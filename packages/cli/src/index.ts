@@ -35,6 +35,7 @@ function printHelp(): void {
       '  --check               Diff against out-dir instead of writing; exit 1 on drift',
       '  --into <path>         Mirror output to this path after generating',
       '  --platform <k|s>      Target platform: kotlin (default) or swift',
+      '  --module <Name>       Swift import module (default: BridgeKit)',
       '',
       'Examples',
       '  bridgekit generate',
@@ -56,6 +57,7 @@ interface BridgekitOptions {
   check: boolean;
   into?: string;
   platform: 'kotlin' | 'swift';
+  moduleName: string;
 }
 
 function parseArgs(args: string[]): BridgekitOptions {
@@ -64,6 +66,7 @@ function parseArgs(args: string[]): BridgekitOptions {
     outDir: 'bridgekit/generated',
     check: false,
     platform: 'kotlin',
+    moduleName: 'BridgeKit',
   };
 
   for (let i = 0; i < args.length; i++) {
@@ -97,6 +100,10 @@ function parseArgs(args: string[]): BridgekitOptions {
         opts.platform = p;
         break;
       }
+      case '--module':
+        opts.moduleName = readOptionValue(args, i, '--module');
+        i++;
+        break;
       default:
         throw new CliError(`Unknown option: ${arg}`);
     }
@@ -217,6 +224,7 @@ async function runGenerate(opts: BridgekitOptions, cwd: string): Promise<number>
         token,
         contractIdToPackage(token.descriptor.id, opts.kotlinPackage),
         className,
+        opts.moduleName,
       );
     }
     return emitKotlinContract(

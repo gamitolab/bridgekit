@@ -1,7 +1,7 @@
 // HybridBridgeHost.swift
 // BridgeKit iOS — Nitro Hybrid implementation for BridgeHost.
 //
-// CLASS NAME: MUST be HybridBridgeHost — BridgeKitAutolinking.swift instantiates by exact name.
+// CLASS NAME: MUST be HybridBridgeHost — BridgeKitNitroAutolinking.swift instantiates by exact name.
 // A rename here silently breaks Nitro autolinking.
 //
 // Requires @_implementationOnly import NitroModules (only available inside the pod build).
@@ -34,8 +34,8 @@ final class HybridBridgeHost: HybridBridgeHostSpec {
 
             // Suspend until the delegate fires the completion callback.
             let resultMap: [String: Any?] = try await withCheckedThrowingContinuation { continuation in
-                BridgeKitNative.shared.delegate.invoke(env: envMap) { result in
-                    continuation.resume(returning: result)
+                BKTransportInvoke(NSDict.fromMap(envMap)) { result in
+                    continuation.resume(returning: NSDict.toMap(result))
                 }
             }
 
@@ -48,7 +48,7 @@ final class HybridBridgeHost: HybridBridgeHostSpec {
     /// Synchronous invoke — blocks the calling thread until delegate returns.
     func invokeSync(env: AnyMap) throws -> AnyMap {
         let envMap  = AnyMapCodec.fromAnyMap(env)
-        let result  = BridgeKitNative.shared.delegate.invokeSync(env: envMap)
+        let result  = NSDict.toMap(BKTransportInvokeSync(NSDict.fromMap(envMap)))
         return try AnyMapCodec.toAnyMap(result)
     }
 
@@ -64,9 +64,11 @@ final class HybridBridgeHost: HybridBridgeHostSpec {
         onStreamClose: @escaping (_ env: AnyMap) -> Void,
         onStateWrite: @escaping (_ env: AnyMap) -> Void
     ) throws -> AnyMap {
-        let callbacks = JsDispatcherCallbacks(
-            onInvoke: { envMap, completion in
-                // If env conversion fails, surface it as an error completion immediately.
+        let epochMap = AnyMapCodec.fromAnyMap(epochInfo)
+        let result = NSDict.toMap(BKTransportConnectDispatcher(
+            NSDict.fromMap(epochMap),
+            { envNS, completion in
+                let envMap = NSDict.toMap(envNS)
                 let nitroEnv: AnyMap
                 do {
                     nitroEnv = try AnyMapCodec.toAnyMap(envMap)
@@ -74,53 +76,37 @@ final class HybridBridgeHost: HybridBridgeHostSpec {
                     completion(nil, error)
                     return
                 }
-
-                // Detach a Task so the two-await chain runs off the current thread.
                 Task {
                     do {
-                        // Double-await: peel Nitro's outer transport Promise, then the JS async inner Promise.
                         let resultAnyMap = try await onInvoke(nitroEnv).await().await()
-                        let resultMap = AnyMapCodec.fromAnyMap(resultAnyMap)
-                        completion(resultMap, nil)
+                        completion(NSDict.fromMap(AnyMapCodec.fromAnyMap(resultAnyMap)), nil)
                     } catch {
-                        // Completion called exactly once — even on throw.
                         completion(nil, error)
                     }
                 }
             },
-            // These three carry no terminal, so there is nothing to substitute —
-            // but a dropped event was previously invisible. Report it instead of
-            // failing silently; iOS still has no diagnostics module, so
-            // SeamEncoding.reportFailure is the single place to redirect once it
-            // does.
-            onStreamOpen: { envMap in
+            { envNS in
                 do {
-                    onStreamOpen(try AnyMapCodec.toAnyMap(envMap))
+                    onStreamOpen(try AnyMapCodec.toAnyMap(NSDict.toMap(envNS)))
                 } catch {
                     SeamEncoding.reportFailure(context: "stream open", error: error)
                 }
             },
-            onStreamClose: { envMap in
+            { envNS in
                 do {
-                    onStreamClose(try AnyMapCodec.toAnyMap(envMap))
+                    onStreamClose(try AnyMapCodec.toAnyMap(NSDict.toMap(envNS)))
                 } catch {
                     SeamEncoding.reportFailure(context: "stream close", error: error)
                 }
             },
-            onStateWrite: { envMap in
+            { envNS in
                 do {
-                    onStateWrite(try AnyMapCodec.toAnyMap(envMap))
+                    onStateWrite(try AnyMapCodec.toAnyMap(NSDict.toMap(envNS)))
                 } catch {
                     SeamEncoding.reportFailure(context: "state write", error: error)
                 }
             }
-        )
-
-        let epochMap  = AnyMapCodec.fromAnyMap(epochInfo)
-        let result    = BridgeKitNative.shared.delegate.connectDispatcher(
-            epochInfo: epochMap,
-            callbacks: callbacks
-        )
+        ))
         return try AnyMapCodec.toAnyMap(result)
     }
 }

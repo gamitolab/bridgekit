@@ -1,6 +1,6 @@
 {
   "name": "@malopezr7/bridgekit-cli",
-  "version": "0.2.0-alpha.1",
+  "version": "0.3.0-alpha.1",
   "description": "Code-generation CLI for BridgeKit — emits Kotlin & Swift bindings from TypeScript contracts",
   "author": "malopezr7 <malopezr7@gmail.com> (https://github.com/malopezr7)",
   "license": "MIT",
