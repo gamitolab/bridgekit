@@ -6,22 +6,32 @@ import BridgeKit
 
 // ---- Types -----------------------------------------------------------------
 
-struct PingParams {
+struct PingParams: Sendable {
     var message: String
 }
 
-struct PingResult {
+struct PingResult: Sendable {
     var reply: String
     var epoch: Double
 }
 
-struct SayParams {
+struct SayParams: Sendable {
     var text: String
 }
 
 // ---- Provider protocol ------------------------------------------------------
 
 /// Native-side implementation protocol for contract 'bridgekit.demo-host'.
+#if swift(>=6.0)
+nonisolated protocol BridgekitDemoHost: AnyObject {
+    func ping(_ params: PingParams) async throws -> PingResult
+    func increment() async throws -> Double
+    func say(_ params: SayParams)
+    func ticker() -> AsyncStream<Double>
+    func echoes() -> AsyncStream<String>
+    var counter: AsyncStream<Double> { get }
+}
+#else
 protocol BridgekitDemoHost: AnyObject {
     func ping(_ params: PingParams) async throws -> PingResult
     func increment() async throws -> Double
@@ -30,10 +40,21 @@ protocol BridgekitDemoHost: AnyObject {
     func echoes() -> AsyncStream<String>
     var counter: AsyncStream<Double> { get }
 }
+#endif
 
 // ---- Client protocol --------------------------------------------------------
 
 /// RN-side consumer protocol for contract 'bridgekit.demo-host'.
+#if swift(>=6.0)
+nonisolated protocol BridgekitDemoHostClient: AnyObject {
+    func ping(_ params: PingParams) async throws -> PingResult
+    func increment() async throws -> Double
+    func say(_ params: SayParams)
+    func ticker() -> AsyncStream<Double>
+    func echoes() -> AsyncStream<String>
+    var counter: AsyncStream<BridgeValue<Double>> { get }
+}
+#else
 protocol BridgekitDemoHostClient: AnyObject {
     func ping(_ params: PingParams) async throws -> PingResult
     func increment() async throws -> Double
@@ -42,9 +63,52 @@ protocol BridgekitDemoHostClient: AnyObject {
     func echoes() -> AsyncStream<String>
     var counter: AsyncStream<BridgeValue<Double>> { get }
 }
+#endif
 
 // ---- Codecs ----------------------------------------------------------------
 
+#if swift(>=6.0)
+nonisolated private enum BridgekitDemoHostCodecs {
+    static func encodePingResult(_ value: PingResult) -> [String: Any?] {
+        var map = [String: Any?]()
+        map["reply"] = value.reply
+        map["epoch"] = value.epoch
+        return map
+    }
+
+    static func decodePingResult(_ raw: [String: Any?], path: String = "") throws -> PingResult {
+        return PingResult(
+            reply: try ((raw["reply"] as Any? as? String) ?? bridgeKitThrow(path: path.isEmpty ? "reply" : path + ".reply", expectedType: "String", actualValue: raw["reply"] as Any?)),
+            epoch: try ((raw["epoch"] as Any? as? Double) ?? Double(try ((raw["epoch"] as Any? as? Int) ?? bridgeKitThrow(path: path.isEmpty ? "epoch" : path + ".epoch", expectedType: "Double", actualValue: raw["epoch"] as Any?))))
+        )
+    }
+
+    static func encodePingParams(_ value: PingParams) -> [String: Any?] {
+        var map = [String: Any?]()
+        map["message"] = value.message
+        return map
+    }
+
+    static func decodePingParams(_ raw: [String: Any?], path: String = "") throws -> PingParams {
+        return PingParams(
+            message: try ((raw["message"] as Any? as? String) ?? bridgeKitThrow(path: path.isEmpty ? "message" : path + ".message", expectedType: "String", actualValue: raw["message"] as Any?))
+        )
+    }
+
+    static func encodeSayParams(_ value: SayParams) -> [String: Any?] {
+        var map = [String: Any?]()
+        map["text"] = value.text
+        return map
+    }
+
+    static func decodeSayParams(_ raw: [String: Any?], path: String = "") throws -> SayParams {
+        return SayParams(
+            text: try ((raw["text"] as Any? as? String) ?? bridgeKitThrow(path: path.isEmpty ? "text" : path + ".text", expectedType: "String", actualValue: raw["text"] as Any?))
+        )
+    }
+
+}
+#else
 private enum BridgekitDemoHostCodecs {
     static func encodePingResult(_ value: PingResult) -> [String: Any?] {
         var map = [String: Any?]()
@@ -85,9 +149,36 @@ private enum BridgekitDemoHostCodecs {
     }
 
 }
+#endif
 
 // ---- Contract definition ---------------------------------------------------
 
+#if swift(>=6.0)
+nonisolated class BridgekitDemoHostContract: BridgeContractDefinition<any BridgekitDemoHost, any BridgekitDemoHostClient> {
+    nonisolated init() {
+        super.init(
+            id: "bridgekit.demo-host",
+            contractHash: "37c69ff7",
+            memberHashes: [
+                "methods.ping": "a65e4d35",
+                "methods.increment": "6c6f31cf",
+                "methods.say": "0432c111",
+                "streams.ticker": "4725c2c3",
+                "streams.echoes": "45c6b5cb",
+                "state.counter": "83f1adea"
+            ]
+        )
+    }
+
+    nonisolated override func inbound(_ impl: any BridgekitDemoHost) -> InboundContractAdapter {
+        return BridgekitDemoHostInboundAdapter(impl: impl)
+    }
+
+    nonisolated override func outbound(_ caller: OutboundCaller) -> any BridgekitDemoHostClient {
+        return BridgekitDemoHostOutboundClient(caller: caller)
+    }
+}
+#else
 class BridgekitDemoHostContract: BridgeContractDefinition<any BridgekitDemoHost, any BridgekitDemoHostClient> {
     init() {
         super.init(
@@ -112,7 +203,55 @@ class BridgekitDemoHostContract: BridgeContractDefinition<any BridgekitDemoHost,
         return BridgekitDemoHostOutboundClient(caller: caller)
     }
 }
+#endif
 
+#if swift(>=6.0)
+nonisolated private class BridgekitDemoHostInboundAdapter: InboundContractAdapter {
+    let impl: any BridgekitDemoHost
+    nonisolated init(impl: any BridgekitDemoHost) { self.impl = impl }
+
+    var stateInitials: [String: Any?] { return [
+        "counter": 0,
+    ] }
+
+    func invoke(member: String, payload: [String: Any?]?) async throws -> Any? {
+        switch member {
+        case "ping":
+            let decoded = try BridgekitDemoHostCodecs.decodePingParams(payload ?? [:])
+            return BridgekitDemoHostCodecs.encodePingResult(try await impl.ping(decoded))
+        case "increment":
+            return try await impl.increment()
+        case "say":
+            let decoded = try BridgekitDemoHostCodecs.decodeSayParams(payload ?? [:])
+            impl.say(decoded)
+            return nil
+        default: throw BridgeKitDecodeError(field: "member", expectedType: member)
+        }
+    }
+
+    func invokeSync(member: String, payload: [String: Any?]?) throws -> Any? {
+        switch member {
+        default: throw BridgeKitDecodeError(field: "member", expectedType: member)
+        }
+    }
+
+    func openStream(member: String, payload: [String: Any?]?) -> AsyncThrowingStream<Any?, Error> {
+        switch member {
+        case "ticker":
+            let src = impl.ticker()
+            return AsyncThrowingStream { cont in Task { for await item in src { cont.yield(item) }; cont.finish() } }
+        case "echoes":
+            let src = impl.echoes()
+            return AsyncThrowingStream { cont in Task { for await item in src { cont.yield(item) }; cont.finish() } }
+        default: return AsyncThrowingStream { $0.finish() }
+        }
+    }
+
+    func stateStreams() -> [String: AsyncStream<Any?>] { return [
+        "counter": AsyncStream<Any?> { cont in Task { for await v in self.impl.counter { cont.yield(v) }; cont.finish() } }
+    ] }
+}
+#else
 private class BridgekitDemoHostInboundAdapter: InboundContractAdapter {
     let impl: any BridgekitDemoHost
     init(impl: any BridgekitDemoHost) { self.impl = impl }
@@ -158,7 +297,48 @@ private class BridgekitDemoHostInboundAdapter: InboundContractAdapter {
         "counter": AsyncStream<Any?> { cont in Task { for await v in self.impl.counter { cont.yield(v) }; cont.finish() } }
     ] }
 }
+#endif
 
+#if swift(>=6.0)
+nonisolated private class BridgekitDemoHostOutboundClient: BridgekitDemoHostClient {
+    let caller: OutboundCaller
+    nonisolated init(caller: OutboundCaller) { self.caller = caller }
+    func ping(_ params: PingParams) async throws -> PingResult {
+        let result = try await caller.invoke(member: "ping", payload: BridgekitDemoHostCodecs.encodePingParams(params))
+        return try BridgekitDemoHostCodecs.decodePingResult(try ((result as? [String: Any?]) ?? bridgeKitThrow(path: "result", expectedType: "PingResult", actualValue: result)), path: "result")
+    }
+    func increment() async throws -> Double {
+        let result = try await caller.invoke(member: "increment", payload: nil)
+        return try ((result as? Double) ?? Double(try ((result as? Int) ?? bridgeKitThrow(path: "result", expectedType: "Double", actualValue: result))))
+    }
+    func say(_ params: SayParams) {
+        caller.fire(member: "say", payload: BridgekitDemoHostCodecs.encodeSayParams(params))
+    }
+    func ticker() -> AsyncStream<Double> {
+        let throwing = caller.stream(member: "ticker", payload: nil)
+        return AsyncStream { cont in Task { do { for try await item in throwing { cont.yield(try ((item as? Double) ?? Double(try ((item as? Int) ?? bridgeKitThrow(path: "ticker.value", expectedType: "Double", actualValue: item))))) } } catch { bridgeKitReportDecodeError(error, context: "stream.ticker"); cont.finish() } } }
+    }
+    func echoes() -> AsyncStream<String> {
+        let throwing = caller.stream(member: "echoes", payload: nil)
+        return AsyncStream { cont in Task { do { for try await item in throwing { cont.yield(try ((item as? String) ?? bridgeKitThrow(path: "echoes.value", expectedType: "String", actualValue: item))) } } catch { bridgeKitReportDecodeError(error, context: "stream.echoes"); cont.finish() } } }
+    }
+    var counter: AsyncStream<BridgeValue<Double>> {
+        let source = caller.state(member: "counter")
+        return AsyncStream { cont in
+            let pump = Task {
+                for await bv in source {
+                    cont.yield(bv.remap { (value: Any?) -> Double? in
+                        do { return try ((value as? Double) ?? Double(try ((value as? Int) ?? bridgeKitThrow(path: "counter.value", expectedType: "Double", actualValue: value)))) }
+                        catch { bridgeKitReportDecodeError(error, context: "state.counter"); return nil }
+                    })
+                }
+                cont.finish()
+            }
+            cont.onTermination = { _ in pump.cancel() }
+        }
+    }
+}
+#else
 private class BridgekitDemoHostOutboundClient: BridgekitDemoHostClient {
     let caller: OutboundCaller
     init(caller: OutboundCaller) { self.caller = caller }
@@ -197,3 +377,4 @@ private class BridgekitDemoHostOutboundClient: BridgekitDemoHostClient {
         }
     }
 }
+#endif
