@@ -10,7 +10,6 @@ package com.margelo.nitro.bridgekit
 import androidx.annotation.Keep
 import com.facebook.jni.HybridData
 import com.facebook.proguard.annotations.DoNotStrip
-import dalvik.annotation.optimization.FastNative
 import com.margelo.nitro.core.AnyMap
 
 /**
@@ -59,7 +58,6 @@ class Func_void_std__shared_ptr_AnyMap__cxx: Func_void_std__shared_ptr_AnyMap_ {
   override fun invoke(value: AnyMap): Unit
     = invoke_cxx(value)
 
-  @FastNative
   private external fun invoke_cxx(value: AnyMap): Unit
 }
 

@@ -12,7 +12,7 @@
  * This class can be used from C++, e.g. to wrap the Swift closure as a `std::function`.
  */
 @_spi(BridgeKitNitro) public final class Func_void_std__shared_ptr_Promise_std__shared_ptr_AnyMap___ {
-  @_spi(BridgeKitNitro) public typealias bridge = margelo.nitro.BridgeKit.bridge.swift
+  public typealias bridge = margelo.nitro.BridgeKit.bridge.swift
 
   private let closure: (_ value: Promise<AnyMap>) -> Void
 

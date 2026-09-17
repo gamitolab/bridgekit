@@ -22,7 +22,7 @@ final class ReactViewController: UIViewController {
     view.backgroundColor = .systemBackground
 
     // rootViewFactory.view(withModuleName:initialProperties:launchOptions:) is the
-    // canonical Expo SDK 55 integrated-approach API (confirmed via Context7 docs).
+    // canonical Expo SDK 57 integrated-approach API.
     let rnView = factory.rootView(forModuleName: "BridgeKitExpoBrownfield")
     rnView.translatesAutoresizingMaskIntoConstraints = false
     view.addSubview(rnView)

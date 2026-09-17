@@ -65,10 +65,9 @@ Kotlin **and** Swift bindings — interfaces, data classes, and codecs.
 
 ## Version policy
 
-The first stable major tracks React Native minor compatibility. For example,
-`83.x.x` targets RN 0.83. Patch and minor releases inside that major can add
-BridgeKit fixes or compatible features without changing the tracked React Native
-minor line.
+The host app chooses React Native and Nitro. BridgeKit declares peer ranges
+(`react-native` >= 0.86, `react-native-nitro-modules` ^0.37) and does not pin
+those versions. Codegen (`nitrogen`) matches the Nitro peer minor.
 
 ## Install
 

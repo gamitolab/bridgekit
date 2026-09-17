@@ -8,7 +8,7 @@ module.exports = {
     {
       ...sharedConfig,
       displayName: 'native',
-      preset: 'react-native',
+      preset: '@react-native/jest-preset',
       testEnvironment: 'node',
       setupFilesAfterEnv: ['<rootDir>/jest.setup.native.ts'],
       transform: {

@@ -12,18 +12,18 @@
   },
   "dependencies": {
     "@malopezr7/bridgekit": "workspace:*",
-    "expo": "~55.0.26",
-    "expo-modules-autolinking": "55.0.24",
-    "expo-modules-core": "55.0.25",
-    "react": "19.2.0",
-    "react-native": "0.83.6",
-    "react-native-nitro-modules": "0.35.0"
+    "expo": "~57.0.9",
+    "expo-modules-autolinking": "~57.0.9",
+    "expo-modules-core": "~57.0.8",
+    "react": "19.2.3",
+    "react-native": "0.86.3",
+    "react-native-nitro-modules": "0.37.1"
   },
   "devDependencies": {
     "@babel/core": "^7.29.6",
-    "@react-native/codegen": "0.83.6",
+    "@react-native/codegen": "0.86.3",
     "@types/react": "^19.0.0",
-    "babel-preset-expo": "~55.0.22",
+    "babel-preset-expo": "~57.0.5",
     "typescript": "5.9.2"
   },
   "engines": {

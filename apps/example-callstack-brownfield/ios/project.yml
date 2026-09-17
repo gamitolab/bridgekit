@@ -116,7 +116,7 @@ targets:
       # Bundle React Native code and images.
       # This phase is REQUIRED by the brownfield CLI — it bundles the JS + assets
       # into the framework so the XCFramework is self-contained.
-      # Script pattern matches apps/example-expo-brownfield/ios/project.yml (same RN 0.83 base).
+      # Script pattern matches apps/example-expo-brownfield/ios/project.yml (same RN 0.86 base).
       - name: "Bundle React Native code and images"
         shell: /bin/sh
         script: |

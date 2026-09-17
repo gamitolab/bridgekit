@@ -6,7 +6,7 @@ apply plugin: "com.facebook.react"
 react {
     // node_modules is hoisted at the monorepo root (pnpm nodeLinker: hoisted), so the
     // RN Gradle Plugin resolves react-native, codegen and the CLI from there automatically.
-    // RN 0.83 ships hermesc in the standalone hermes-compiler package, not react-native/sdks.
+    // RN 0.86 ships hermesc in the standalone hermes-compiler package, not react-native/sdks.
     hermesCommand = "$rootDir/../../../node_modules/hermes-compiler/hermesc/%OS-BIN%/hermesc"
 
     // Pulls every autolinked native module (BridgeKit, Nitro) into the app.

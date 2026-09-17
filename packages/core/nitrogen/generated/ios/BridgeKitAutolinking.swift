@@ -10,7 +10,7 @@
 // TODO: Use empty enums once Swift supports exporting them as namespaces
 //       See: https://github.com/swiftlang/swift/pull/83616
 @_spi(BridgeKitNitro) public final class BridgeKitAutolinking {
-  @_spi(BridgeKitNitro) public typealias bridge = margelo.nitro.BridgeKit.bridge.swift
+  public typealias bridge = margelo.nitro.BridgeKit.bridge.swift
 
   public static func createBridgeHost() -> bridge.std__shared_ptr_HybridBridgeHostSpec_ {
     let hybridObject = HybridBridgeHost()

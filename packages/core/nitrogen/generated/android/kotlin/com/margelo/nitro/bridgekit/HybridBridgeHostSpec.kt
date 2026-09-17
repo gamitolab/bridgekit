@@ -10,6 +10,7 @@ package com.margelo.nitro.bridgekit
 import androidx.annotation.Keep
 import com.facebook.jni.HybridData
 import com.facebook.proguard.annotations.DoNotStrip
+import dalvik.annotation.optimization.FastNative
 import com.margelo.nitro.core.AnyMap
 import com.margelo.nitro.core.Promise
 import com.margelo.nitro.core.HybridObject
@@ -57,6 +58,7 @@ abstract class HybridBridgeHostSpec: HybridObject() {
   @Keep
   protected open class CxxPart(javaPart: HybridBridgeHostSpec): HybridObject.CxxPart(javaPart) {
     // C++ JHybridBridgeHostSpec::CxxPart::initHybrid(...)
+    @FastNative
     external override fun initHybrid(): HybridData
   }
   override fun createCxxPart(): CxxPart {

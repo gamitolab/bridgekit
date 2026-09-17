@@ -25,7 +25,7 @@ buildscript {
     }
 }
 
-// Do not apply com.facebook.react.rootproject here: RN 0.83's root plugin hardcodes
+// Do not apply com.facebook.react.rootproject here: RN's root plugin hardcodes
 // a ':app' application module, while this brownfield sample intentionally uses
 // ':reactnativeapp' (AAR) + ':host' (native app).
 
@@ -67,16 +67,16 @@ subprojects { subproject ->
     configurations.configureEach {
         resolutionStrategy.eachDependency { details ->
             if (details.requested.group == "com.facebook.react" && details.requested.name == "react-native") {
-                details.useTarget("com.facebook.react:react-android:0.83.6")
+                details.useTarget("com.facebook.react:react-android:0.86.3")
                 details.because("react-native artifact was renamed to react-android for RN 0.71+")
             }
             if (details.requested.group == "com.facebook.react" && details.requested.name == "react-android") {
-                details.useTarget("com.facebook.react:react-android:0.83.6")
+                details.useTarget("com.facebook.react:react-android:0.86.3")
                 details.because("RN root plugin is not applied in this two-module brownfield layout")
             }
             if (details.requested.group == "com.facebook.react" && details.requested.name in ["hermes-engine", "hermes-android"]) {
-                details.useTarget("com.facebook.hermes:hermes-android:0.14.1")
-                details.because("RN 0.83 publishes Hermes under com.facebook.hermes, versioned from sdks/hermes-engine/version.properties")
+                details.useTarget("com.facebook.react:hermes-android:0.86.3")
+                details.because("RN 0.86 publishes Hermes as com.facebook.react:hermes-android matching the RN version")
             }
         }
     }

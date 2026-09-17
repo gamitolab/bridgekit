@@ -11,15 +11,18 @@ demo as `apps/example` (native→JS ping / increment / ticker / counter, JS→na
 
 | | |
 |---|---|
-| Expo SDK | 55 (`~55.0.26`) |
-| React Native | 0.83.6 |
-| React | 19.2.0 |
-| Nitro | react-native-nitro-modules 0.35.0 |
+| Expo SDK | 57 (`~57.0.9`) |
+| React Native | 0.86.3 |
+| React | 19.2.3 |
+| Nitro | react-native-nitro-modules 0.37.1 |
 | Architecture | New Architecture + Hermes (required by Nitro) |
 
-**Why SDK 55 and not 56?** SDK 55 pairs with RN 0.83, which matches BridgeKit's pinned RN 0.83.6
-and its generated codegen. The whole pnpm monorepo shares a single RN version, so the example is
-anchored to BridgeKit — it moves to SDK 56 / RN 0.85+ only when BridgeKit does.
+The example pins RN/Nitro/Expo so the workspace can install. `@malopezr7/bridgekit`
+only declares peer ranges; a host app may choose any RN >= 0.86 with Nitro 0.37.x.
+
+Native Xcode/Gradle files in this example are not re-archived here. Run
+`pod install` / Gradle sync against RN 0.86 before building the host. The
+BridgeKit pod itself is proven on Xcode 27 via `apps/example/ios`.
 
 ## Layout
 
@@ -84,4 +87,4 @@ cd apps/example-expo-brownfield/android && ./gradlew :app:installDebug
 - `xcodegen` and `pod install` must be run before opening Xcode; CocoaPods rewrites the
   generated `.xcodeproj` script phases (expected).
 - `RCTReactNativeFactory.rootViewFactory` selector and the bundle script phase names should be
-  confirmed against the RN 0.83.6 pods on first build.
+  confirmed against the RN 0.86.3 pods on first build.

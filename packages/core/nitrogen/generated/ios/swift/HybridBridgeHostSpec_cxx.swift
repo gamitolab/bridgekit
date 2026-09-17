@@ -22,7 +22,7 @@
    * from `BridgeKit-Swift-Cxx-Bridge.hpp`.
    * This contains specialized C++ templates, and C++ helper functions that can be accessed from Swift.
    */
-  @_spi(BridgeKitNitro) public typealias bridge = margelo.nitro.BridgeKit.bridge.swift
+  public typealias bridge = margelo.nitro.BridgeKit.bridge.swift
 
   /**
    * Holds an instance of the `HybridBridgeHostSpec` Swift protocol.
