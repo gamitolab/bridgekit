@@ -142,8 +142,8 @@ dependencies {
     // The RN root Gradle plugin is intentionally not applied in this two-module
     // brownfield project, so pin the artifacts explicitly instead of relying on
     // root-plugin dependency substitution.
-    api("com.facebook.react:react-android:0.83.6")
-    api("com.facebook.hermes:hermes-android:0.14.1")
+    api("com.facebook.react:react-android:0.86.3")
+    api("com.facebook.react:hermes-android:0.86.3")
 }
 
 // ---------------------------------------------------------------------------

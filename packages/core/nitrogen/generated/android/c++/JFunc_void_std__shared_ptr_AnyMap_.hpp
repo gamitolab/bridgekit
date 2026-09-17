@@ -25,7 +25,7 @@ namespace margelo::nitro::BridgeKit {
    */
   struct JFunc_void_std__shared_ptr_AnyMap_: public jni::JavaClass<JFunc_void_std__shared_ptr_AnyMap_> {
   public:
-    static auto constexpr kJavaDescriptor = "Lcom/margelo/nitro/bridgekit/Func_void_std__shared_ptr_AnyMap_;";
+    static constexpr auto kJavaDescriptor = "Lcom/margelo/nitro/bridgekit/Func_void_std__shared_ptr_AnyMap_;";
 
   public:
     /**
@@ -61,7 +61,7 @@ namespace margelo::nitro::BridgeKit {
     }
 
   public:
-    static auto constexpr kJavaDescriptor = "Lcom/margelo/nitro/bridgekit/Func_void_std__shared_ptr_AnyMap__cxx;";
+    static constexpr auto kJavaDescriptor = "Lcom/margelo/nitro/bridgekit/Func_void_std__shared_ptr_AnyMap__cxx;";
     static void registerNatives() {
       registerHybrid({makeNativeMethod("invoke_cxx", JFunc_void_std__shared_ptr_AnyMap__cxx::invoke_cxx)});
     }

@@ -10,16 +10,16 @@
   },
   "autolinking": {
     "BridgeHost": {
-      "swift": "HybridBridgeHost",
-      "kotlin": "HybridBridgeHost"
+      "ios": { "language": "swift", "implementationClassName": "HybridBridgeHost" },
+      "android": { "language": "kotlin", "implementationClassName": "HybridBridgeHost" }
     },
     "BridgeStreams": {
-      "swift": "HybridBridgeStreams",
-      "kotlin": "HybridBridgeStreams"
+      "ios": { "language": "swift", "implementationClassName": "HybridBridgeStreams" },
+      "android": { "language": "kotlin", "implementationClassName": "HybridBridgeStreams" }
     },
     "BridgeState": {
-      "swift": "HybridBridgeState",
-      "kotlin": "HybridBridgeState"
+      "ios": { "language": "swift", "implementationClassName": "HybridBridgeState" },
+      "android": { "language": "kotlin", "implementationClassName": "HybridBridgeState" }
     }
   },
   "ignorePaths": ["**/node_modules"]

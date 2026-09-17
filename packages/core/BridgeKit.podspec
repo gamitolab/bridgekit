@@ -22,6 +22,21 @@ Pod::Spec.new do |s|
   load 'nitrogen/generated/ios/BridgeKit+autolinking.rb'
   add_nitrogen_files(s)
 
+  # Nitrogen already sets C++20, objcxx interop, DEFINES_MODULE, and
+  # SWIFT_INSTALL_OBJC_HEADER=NO (required on Xcode 26.4+ / 27 static linkage).
+  # Force libc++ and keep the module in C++/ObjC++ — compiling the Clang module
+  # as C makes Nitro 0.37's <regex> include fail with:
+  #   NitroTypeInfo.hpp: #include <regex> file not found
+  #   could not build Objective-C module 'BridgeKit'
+  current_xcconfig = s.attributes_hash['pod_target_xcconfig'] || {}
+  s.pod_target_xcconfig = current_xcconfig.merge(
+    'CLANG_CXX_LANGUAGE_STANDARD' => 'c++20',
+    'CLANG_CXX_LIBRARY' => 'libc++',
+    'SWIFT_OBJC_INTEROP_MODE' => 'objcxx',
+    'DEFINES_MODULE' => 'YES',
+    'SWIFT_INSTALL_OBJC_HEADER' => 'NO'
+  )
+
   s.dependency 'React-jsi'
   s.dependency 'React-callinvoker'
   install_modules_dependencies(s)

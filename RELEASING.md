@@ -2,17 +2,18 @@
 
 ## Version policy
 
-The first stable major tracks React Native minor compatibility. For example,
-`83.x.x` targets RN 0.83.
+The host app chooses React Native and Nitro. BridgeKit's own version is not a
+React Native minor. Peer ranges on `@malopezr7/bridgekit` declare the minimum
+supported RN/Nitro; bump those peers (and regenerate Nitrogen) when the
+supported floor moves.
 
-Use patch and minor releases inside the tracked major for compatible BridgeKit
-fixes and features. Move to a new major when the supported React Native minor
-line changes.
+Use patch and minor releases for compatible BridgeKit fixes and features.
+Bump the major when BridgeKit itself breaks.
 
 ### Pre-stable line
 
 Before the first stable release BridgeKit ships on the `0.x` line. The current
-line is `0.1.0-alpha.N`, and it deliberately does not continue the earlier
+line is `0.2.0-alpha.N`, and it deliberately does not continue the earlier
 `0.0.1-beta.x` numbering:
 
 - The contract hash and wire format changed between the two lines with no

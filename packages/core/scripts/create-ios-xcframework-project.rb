@@ -59,9 +59,13 @@ nitro_public_header_names = %w[
   Promise.hpp
   PromiseHolder.hpp
   PropNameIDCache.hpp
+  RawPropsCompat.hpp
+  ReactProp.hpp
   Result.hpp
   RuntimeError.hpp
   SwiftClosure.hpp
+  ViewComponentDescriptor.hpp
+  ViewPropsHolderState.hpp
 ]
 
 nitro_header_sources = [
@@ -104,6 +108,7 @@ common_framework_settings = {
   'SKIP_INSTALL' => 'NO',
   'SWIFT_VERSION' => '5.0',
   'SWIFT_OBJC_INTEROP_MODE' => 'objcxx',
+  'SWIFT_INSTALL_OBJC_HEADER' => 'NO',
   'CLANG_CXX_LANGUAGE_STANDARD' => 'c++20',
   'CLANG_CXX_LIBRARY' => 'libc++',
   'CLANG_ENABLE_MODULES' => 'YES',

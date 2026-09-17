@@ -24,11 +24,16 @@ Both demonstrate the same BridgeKit integration; they show two complementary bro
 
 | | |
 |---|---|
-| @callstack/react-native-brownfield | 3.12.0 |
+| @callstack/react-native-brownfield | 5.1.0 |
 | brownfield-gradle-plugin | 1.1.0 (stable) |
-| React Native | 0.83.6 · React 19.2.0 |
-| Nitro | react-native-nitro-modules 0.35.0 |
+| React Native | 0.86.3 · React 19.2.3 |
+| Nitro | react-native-nitro-modules 0.37.1 |
 | Architecture | New Architecture + Hermes |
+
+Native host packaging (`package:ios` / `package:android`) is not re-run in this
+PR. JS deps track RN 0.86 / Nitro 0.37 / brownfield 5.1. Run a fresh
+`xcodegen` + `pod install` (iOS) and Gradle sync (Android) before packaging.
+The BridgeKit pod itself is proven on Xcode 27 via `apps/example/ios`.
 
 ## Layout
 
@@ -51,9 +56,14 @@ android/
 ## Brownfield wiring — the bits that matter
 
 - **iOS**: the RN code lives in a Framework target (`use_frameworks! :linkage => :static`,
-  `inherit! :complete`). `BridgekitDemoInitializer.configure()` is `public` in the framework and the
-  host's `AppDelegate` calls it before `ReactNativeBrownfield.shared.startReactNative(...)`. The host
-  presents `ReactNativeViewController(moduleName: "BridgeKitCallstackBrownfield")`.
+  `inherit! :complete`). This example keeps `BridgekitDemoInitializer.configure()` *inside* the
+  packaged framework so the Node-free host can call it. That is a static-packaging demo trick,
+  not the product rule. A real host should `import BridgeKit` (Swift module visible; Callstack
+  hosts typically re-export with `@_exported import BridgeKit`) and provide native implementations
+  itself — JS consumes, native of the host provides.
+- The host's `AppDelegate` calls the initializer before
+  `ReactNativeBrownfield.shared.startReactNative(...)`, then presents
+  `ReactNativeViewController(moduleName: "BridgeKitCallstackBrownfield")`.
 - **Android**: `ReactNativeHostManager` runs `loadReactNative(application)` →
   `BridgekitDemoInitializer.init(...)` → `PackageList(application).packages.apply { add(BridgeKitPackage()) }`
   → `ReactNativeBrownfield.initialize(application, packages)`. The host presents
@@ -87,7 +97,7 @@ See `ios/README.md` and `android/README.md` for the detailed packaging sequence.
 ## First-build checks (not verifiable without compiling)
 
 - `brownfield-gradle-plugin` version: pinned to stable **1.1.0** (Maven Central also lists
-  `2.0.0-alpha01`). If the CLI 3.12.0 requires plugin 2.x, bump the classpath.
+  `2.0.0-alpha01`). If CLI 5.1.0 requires plugin 2.x, bump the classpath.
 - `loadReactNative` import is emitted by the brownfield Gradle plugin during `package:android`;
   it exists only after that task runs.
 - iOS: confirm the exact `hermesvm.xcframework` filename and the xcframework output path from the

@@ -12,6 +12,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+## [0.2.0-alpha.1] - 2026-09-17
+
+### Breaking
+
+- Peer floor is now `react-native` >= 0.86 and `react-native-nitro-modules` ^0.37.
+  The host app pins those versions; this package does not. Nitrogen codegen is
+  0.37.1 (same minor as the Nitro peer). Do not install this line against RN 0.83
+  / Nitro 0.35.
+
+### Changed
+
+- Regenerated iOS/Android Nitrogen output for 0.37.1, including
+  `SWIFT_INSTALL_OBJC_HEADER=NO` so static linkage on Xcode 26.4+ / 27 compiles.
+
+### Fixed
+
+- BridgeKit's Clang module no longer fails on Xcode 27 with
+  `NitroTypeInfo.hpp: #include <regex> file not found`. The pod compiles as
+  C++/ObjC++ (`CLANG_CXX_LIBRARY=libc++`, `SWIFT_OBJC_INTEROP_MODE=objcxx`).
+
 ## [0.1.0-alpha.1] - 2026-09-01
 
 ### Breaking

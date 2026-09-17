@@ -21,11 +21,11 @@ namespace margelo::nitro::BridgeKit {
   class JHybridBridgeHostSpec: public virtual HybridBridgeHostSpec, public virtual JHybridObject {
   public:
     struct JavaPart: public jni::JavaClass<JavaPart, JHybridObject::JavaPart> {
-      static auto constexpr kJavaDescriptor = "Lcom/margelo/nitro/bridgekit/HybridBridgeHostSpec;";
+      static constexpr auto kJavaDescriptor = "Lcom/margelo/nitro/bridgekit/HybridBridgeHostSpec;";
       std::shared_ptr<JHybridBridgeHostSpec> getJHybridBridgeHostSpec();
     };
     struct CxxPart: public jni::HybridClass<CxxPart, JHybridObject::CxxPart> {
-      static auto constexpr kJavaDescriptor = "Lcom/margelo/nitro/bridgekit/HybridBridgeHostSpec$CxxPart;";
+      static constexpr auto kJavaDescriptor = "Lcom/margelo/nitro/bridgekit/HybridBridgeHostSpec$CxxPart;";
       static jni::local_ref<jhybriddata> initHybrid(jni::alias_ref<jhybridobject> jThis);
       static void registerNatives();
       using HybridBase::HybridBase;

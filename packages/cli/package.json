@@ -1,6 +1,6 @@
 {
   "name": "@malopezr7/bridgekit-cli",
-  "version": "0.1.0-alpha.1",
+  "version": "0.2.0-alpha.1",
   "description": "Code-generation CLI for BridgeKit — emits Kotlin & Swift bindings from TypeScript contracts",
   "author": "malopezr7 <malopezr7@gmail.com> (https://github.com/malopezr7)",
   "license": "MIT",
@@ -53,7 +53,7 @@
   "devDependencies": {
     "@babel/core": "7.29.6",
     "@biomejs/biome": "2.5.2",
-    "@react-native/babel-preset": "0.83.6",
+    "@react-native/babel-preset": "0.86.3",
     "@types/jest": "^29.5.13",
     "@types/node": "^22.0.0",
     "babel-jest": "29.7.0",

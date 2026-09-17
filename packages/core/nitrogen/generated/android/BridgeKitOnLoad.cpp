@@ -31,25 +31,25 @@ int initialize(JavaVM* vm) {
 }
 
 struct JHybridBridgeHostSpecImpl: public jni::JavaClass<JHybridBridgeHostSpecImpl, JHybridBridgeHostSpec::JavaPart> {
-  static auto constexpr kJavaDescriptor = "Lcom/margelo/nitro/bridgekit/HybridBridgeHost;";
+  static constexpr auto kJavaDescriptor = "Lcom/margelo/nitro/bridgekit/HybridBridgeHost;";
   static std::shared_ptr<JHybridBridgeHostSpec> create() {
-    static auto constructorFn = javaClassStatic()->getConstructor<JHybridBridgeHostSpecImpl::javaobject()>();
+    static const auto constructorFn = javaClassStatic()->getConstructor<JHybridBridgeHostSpecImpl::javaobject()>();
     jni::local_ref<JHybridBridgeHostSpec::JavaPart> javaPart = javaClassStatic()->newObject(constructorFn);
     return javaPart->getJHybridBridgeHostSpec();
   }
 };
 struct JHybridBridgeStreamsSpecImpl: public jni::JavaClass<JHybridBridgeStreamsSpecImpl, JHybridBridgeStreamsSpec::JavaPart> {
-  static auto constexpr kJavaDescriptor = "Lcom/margelo/nitro/bridgekit/HybridBridgeStreams;";
+  static constexpr auto kJavaDescriptor = "Lcom/margelo/nitro/bridgekit/HybridBridgeStreams;";
   static std::shared_ptr<JHybridBridgeStreamsSpec> create() {
-    static auto constructorFn = javaClassStatic()->getConstructor<JHybridBridgeStreamsSpecImpl::javaobject()>();
+    static const auto constructorFn = javaClassStatic()->getConstructor<JHybridBridgeStreamsSpecImpl::javaobject()>();
     jni::local_ref<JHybridBridgeStreamsSpec::JavaPart> javaPart = javaClassStatic()->newObject(constructorFn);
     return javaPart->getJHybridBridgeStreamsSpec();
   }
 };
 struct JHybridBridgeStateSpecImpl: public jni::JavaClass<JHybridBridgeStateSpecImpl, JHybridBridgeStateSpec::JavaPart> {
-  static auto constexpr kJavaDescriptor = "Lcom/margelo/nitro/bridgekit/HybridBridgeState;";
+  static constexpr auto kJavaDescriptor = "Lcom/margelo/nitro/bridgekit/HybridBridgeState;";
   static std::shared_ptr<JHybridBridgeStateSpec> create() {
-    static auto constructorFn = javaClassStatic()->getConstructor<JHybridBridgeStateSpecImpl::javaobject()>();
+    static const auto constructorFn = javaClassStatic()->getConstructor<JHybridBridgeStateSpecImpl::javaobject()>();
     jni::local_ref<JHybridBridgeStateSpec::JavaPart> javaPart = javaClassStatic()->newObject(constructorFn);
     return javaPart->getJHybridBridgeStateSpec();
   }

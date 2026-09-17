@@ -10,7 +10,6 @@ package com.margelo.nitro.bridgekit
 import androidx.annotation.Keep
 import com.facebook.jni.HybridData
 import com.facebook.proguard.annotations.DoNotStrip
-import dalvik.annotation.optimization.FastNative
 import com.margelo.nitro.core.AnyMap
 import com.margelo.nitro.core.Promise
 
@@ -60,7 +59,6 @@ class Func_std__shared_ptr_Promise_std__shared_ptr_Promise_std__shared_ptr_AnyMa
   override fun invoke(env: AnyMap): Promise<Promise<AnyMap>>
     = invoke_cxx(env)
 
-  @FastNative
   private external fun invoke_cxx(env: AnyMap): Promise<Promise<AnyMap>>
 }
 

@@ -101,6 +101,21 @@ tool this repository does not own, or has no fix:
 
 ## Resolved, not yet published
 
+### RT-IOS-03 — Xcode 27 could not build the BridgeKit Clang module (`<regex>` missing)
+
+Compiling BridgeKit as an Objective-C module on Xcode 26.4+ / 27 failed with
+`NitroTypeInfo.hpp: #include <regex> file not found` → `could not build
+Objective-C module 'BridgeKit'`. Autolinking succeeded; the pod did not compile.
+The module was being parsed as C, so the C++ standard library header was
+invisible.
+
+- **Fix:** regenerate with Nitrogen 0.37.1 (`SWIFT_INSTALL_OBJC_HEADER=NO` for
+  static linkage on Xcode 26.4+), keep `SWIFT_OBJC_INTEROP_MODE=objcxx`, and
+  force `CLANG_CXX_LIBRARY=libc++` on the BridgeKit pod. The host still chooses
+  RN/Nitro via peer ranges (`react-native` >= 0.86, `react-native-nitro-modules`
+  ^0.37).
+- **Ships in:** `@malopezr7/bridgekit` 0.2.0-alpha.1.
+
 ### RT-AND-03 / RT-AND-04 — StreamHub races on Android (WS-5)
 
 `StreamHub` (`packages/core/android/src/main/java/com/bridgekit/core/StreamHub.kt`)

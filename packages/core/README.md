@@ -31,8 +31,9 @@ BridgeKit is a Nitro module. After installing:
 - **iOS** — `cd ios && pod install`
 - **Android** — autolinking handles it; no manual steps.
 
-**Peer dependencies:** `react`, `react-native`, `react-native-nitro-modules`.
-Built and tested against React Native `0.83` and `react-native-nitro-modules` `0.35`.
+**Peer dependencies:** `react`, `react-native` (>= 0.86), `react-native-nitro-modules` (^0.37).
+The host app pins RN and Nitro; this package does not. Dev builds in this repo
+use React Native `0.86.3` and `react-native-nitro-modules` `0.37.1`.
 
 ## Entry points
 

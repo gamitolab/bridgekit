@@ -12,7 +12,7 @@ import expo.modules.ApplicationLifecycleDispatcher
 import expo.modules.ExpoReactHostFactory
 
 // ---------------------------------------------------------------------------
-// MainApplication — Expo brownfield host (integrated approach, SDK 55 / RN 0.83).
+// MainApplication — Expo brownfield host (integrated approach, SDK 57 / RN 0.86).
 //
 // Native wiring verified against a real in-production Expo brownfield app
 // (Axion.Framework ReactManager.kt) and the official Expo brownfield docs:
