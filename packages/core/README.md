@@ -43,7 +43,10 @@ imports Nitro and never puts `provide()` inside the RN framework.
 
 `BRIDGEKIT_HOST_PROVIDES_RUNTIME=1` is a **build mode**: the host already
 links public BridgeKit (Swift package / xcframework), so CocoaPods must not
-inject a second copy into the RN target.
+inject a second copy into the RN target. In that mode `BridgeKitNitro` also
+skips `BKTransportWeakStubs.m` (stubs in the same image as Nitro swallow
+`provide()`) and the RN target must link with `-Wl,-undefined,dynamic_lookup`
+so `BKTransport*` stay unbound until the host image loads.
 
 1. `pnpm add @malopezr7/bridgekit@alpha react-native-nitro-modules`
 2. Generate host contracts: `bridgekit generate --platform swift --out-dir ios/HostApp/Generated`

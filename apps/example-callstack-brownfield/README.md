@@ -56,10 +56,13 @@ android/
 ## Brownfield wiring — the bits that matter
 
 - **iOS**: the RN code lives in a Framework target (`use_frameworks! :linkage => :static`,
-  `inherit! :complete`, `BRIDGEKIT_HOST_PROVIDES_RUNTIME=1`). HostApp links public
-  `BridgeKit` as a local Swift package and calls `BridgekitDemoInitializer.configure()`
-  before `startReactNative`. JS consumes; the host provides. Do not `@_exported import`
-  BridgeKit from the RN framework — that fuses Nitro/C++ into the host module.
+  `inherit! :complete`, `BRIDGEKIT_HOST_PROVIDES_RUNTIME=1` — build mode, host
+  supplies the public runtime). That mode excludes `BKTransportWeakStubs.m` from
+  Nitro and links `ReactNativeFramework` with `-Wl,-undefined,dynamic_lookup`.
+  HostApp links public `BridgeKit` as a local Swift package and calls
+  `BridgekitDemoInitializer.configure()` before `startReactNative`. JS consumes;
+  the host provides. Do not `@_exported import` BridgeKit from the RN framework —
+  that fuses Nitro/C++ into the host module.
 - The host's `AppDelegate` calls the initializer before
   `ReactNativeBrownfield.shared.startReactNative(...)`, then presents
   `ReactNativeViewController(moduleName: "BridgeKitCallstackBrownfield")`.

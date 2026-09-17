@@ -38,8 +38,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     ReactNativeBrownfield.shared.startReactNative(
       onBundleLoaded: {
         NSLog("[HostApp] React Native bundle loaded")
-      },
-      launchOptions: launchOptions
+      }
     )
 
     // Step 4: Native home screen is the root — RN is presented on demand.

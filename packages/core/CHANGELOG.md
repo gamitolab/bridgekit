@@ -12,6 +12,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- `BKTransport.h` wraps C function declarations in `extern "C"` so Swift
+  `SWIFT_OBJC_INTEROP_MODE=objcxx` does not C++-mangle `BKTransportInvoke`.
+  The `BKTransportHooks` `@interface` stays outside that block.
+- When `BRIDGEKIT_HOST_PROVIDES_RUNTIME=1`, `BridgeKitNitro` excludes
+  `BKTransportWeakStubs.m` and the RN target links with
+  `-Wl,-undefined,dynamic_lookup`. Weak stubs fused into the same image as
+  Nitro never reach the host `provide()`.
+- `BridgeKitNitro` disables `SWIFT_VERIFY_EMITTED_MODULE_INTERFACE` so Xcode 27
+  does not rebuild the C++ umbrella while verifying the Swift module.
+
 ## [0.3.0-alpha.2] - 2026-09-17
 
 ### Fixed
@@ -30,7 +40,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - iOS is two modules: `BridgeKit` (pure Swift/ObjC public API) and
   `BridgeKitNitro` (JSI/C++ transport). Host apps `import BridgeKit` and never
   import Nitro. Autolinking pulls `BridgeKitNitro`, which depends on `BridgeKit`
-  unless `BRIDGEKIT_HOST_PROVIDES_RUNTIME=1` (Callstack brownfield).
+  unless `BRIDGEKIT_HOST_PROVIDES_RUNTIME=1` (host already links public
+  BridgeKit).
 - Android `AnyMapCodec` moved to `com.margelo.nitro.bridgekit` (Nitro layer).
 
 ### Added
