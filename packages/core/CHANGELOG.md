@@ -12,6 +12,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+## [0.3.0-alpha.2] - 2026-09-17
+
+### Fixed
+
+- `BridgeKitNitro` no longer sets `SWIFT_OBJC_BRIDGING_HEADER`. Framework
+  targets (`use_frameworks!`) rejected it. `BKTransport.h` is a public header
+  of the Nitro module; Swift uses `[AnyHashable: Any]` for the seam.
+- Expo / RN autolinking always selects `BridgeKitNitro.podspec` (the only
+  podspec in the package root). The public pod lives at `ios/BridgeKit.podspec`
+  and is injected unless `BRIDGEKIT_HOST_PROVIDES_RUNTIME=1`.
+
 ## [0.3.0-alpha.1] - 2026-09-17
 
 ### Breaking

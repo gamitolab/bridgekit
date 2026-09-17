@@ -1,6 +1,6 @@
 {
   "name": "@malopezr7/bridgekit",
-  "version": "0.3.0-alpha.1",
+  "version": "0.3.0-alpha.2",
   "description": "Typed bidirectional bridge between React Native and native (Android/iOS)",
   "author": "malopezr7 <malopezr7@gmail.com> (https://github.com/malopezr7)",
   "license": "MIT",
@@ -74,7 +74,9 @@
     "nitrogen/generated",
     "react-native.config.js",
     "nitro.json",
-    "*.podspec",
+    "BridgeKitNitro.podspec",
+    "ios/BridgeKit.podspec",
+    "scripts/cocoapods_inject_public_runtime.rb",
     "README.md",
     "LICENSE",
     "!**/__tests__",

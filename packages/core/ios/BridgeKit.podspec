@@ -1,6 +1,6 @@
 require "json"
 
-package = JSON.parse(File.read(File.join(__dir__, "package.json")))
+package = JSON.parse(File.read(File.join(__dir__, "..", "package.json")))
 
 Pod::Spec.new do |s|
   s.name         = "BridgeKit"
@@ -15,14 +15,16 @@ Pod::Spec.new do |s|
 
   # Public Swift API + the C/ObjC transport seam implementation.
   # No Nitro, no JSI, no C++. A brownfield host can import this module.
+  # This file lives under ios/ so Expo/RN autolinking (package-root *.podspec)
+  # never picks it instead of BridgeKitNitro.
   s.source_files = [
-    "ios/engine/**/*.{h,m,swift}",
-    "ios/runtime/**/*.{h,m,swift}",
-    "ios/objc/**/*.{h,m,swift}",
-    "ios/seam/**/*.{h,m,swift}"
+    "engine/**/*.{h,m,swift}",
+    "runtime/**/*.{h,m,swift}",
+    "objc/**/*.{h,m,swift}",
+    "seam/**/*.{h,m,swift}"
   ]
-  s.public_header_files = "ios/seam/BKTransport.h"
-  s.exclude_files = "ios/__tests__/**/*", "ios/objc/BridgeKitObjC.h"
+  s.public_header_files = "seam/BKTransport.h"
+  s.exclude_files = "__tests__/**/*", "objc/BridgeKitObjC.h"
   s.requires_arc = true
 
   s.pod_target_xcconfig = {

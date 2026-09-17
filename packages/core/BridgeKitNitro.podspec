@@ -1,4 +1,5 @@
 require "json"
+require_relative "scripts/cocoapods_inject_public_runtime"
 
 package = JSON.parse(File.read(File.join(__dir__, "package.json")))
 
@@ -17,6 +18,9 @@ Pod::Spec.new do |s|
     "ios/nitro/**/*.{h,m,mm,swift}",
     "ios/seam/BKTransport.h"
   ]
+  # Public so Swift in this target sees BKTransport* without a bridging header.
+  # Bridging headers are unsupported on framework targets (use_frameworks!).
+  s.public_header_files = "ios/seam/BKTransport.h"
   s.exclude_files = "ios/__tests__/**/*"
   s.requires_arc = true
 
@@ -29,17 +33,8 @@ Pod::Spec.new do |s|
     "CLANG_CXX_LIBRARY" => "libc++",
     "SWIFT_OBJC_INTEROP_MODE" => "objcxx",
     "DEFINES_MODULE" => "YES",
-    "SWIFT_INSTALL_OBJC_HEADER" => "NO",
-    "SWIFT_OBJC_BRIDGING_HEADER" => "${PODS_TARGET_SRCROOT}/ios/seam/BKTransport.h"
+    "SWIFT_INSTALL_OBJC_HEADER" => "NO"
   )
-
-  # A normal RN app autolinks this pod and needs the public runtime in-process.
-  # A Callstack brownfield packager sets BRIDGEKIT_HOST_PROVIDES_RUNTIME=1 so the
-  # host links public BridgeKit itself (SPM / xcframework) and this pod does not
-  # fuse a second copy into BrownfieldLib.
-  unless ENV["BRIDGEKIT_HOST_PROVIDES_RUNTIME"] == "1"
-    s.dependency "BridgeKit"
-  end
 
   s.dependency "React-jsi"
   s.dependency "React-callinvoker"

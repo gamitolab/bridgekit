@@ -6,8 +6,8 @@ require Pod::Executable.execute_command('node', ['-p',
     {paths: [process.argv[1]]},
   )', __dir__]).strip
 
-# Host app supplies the public BridgeKit runtime (SPM). Do not fuse a second
-# copy into the packaged RN framework.
+# Host supplies the public BridgeKit runtime (SPM). Do not inject a second
+# copy into the packaged RN target.
 ENV['BRIDGEKIT_HOST_PROVIDES_RUNTIME'] = '1'
 
 platform :ios, min_ios_version_supported

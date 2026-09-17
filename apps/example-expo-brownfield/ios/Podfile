@@ -12,10 +12,6 @@ install! 'cocoapods',
 
 prepare_react_native_project!
 
-target 'BridgeKitDemoSupport' do
-  pod 'BridgeKit', :path => '../../../packages/core'
-end
-
 target 'BridgeKitExpoBrownfield' do
   use_expo_modules!
 

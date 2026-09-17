@@ -1,3 +1,4 @@
+import BridgeKit
 import UIKit
 
 @main
@@ -15,9 +16,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     window = UIWindow(frame: UIScreen.main.bounds)
 
     // Initialize BridgeKit BEFORE the JS bundle loads.
-    // Mirrors exactly what apps/example/ios/BridgeKitExample/AppDelegate.swift does:
-    //   BridgeKitDemoSupportConfigure()
-    BridgeKitDemoSupportConfigure()
+    BridgekitDemoInitializer.configure()
 
     // Native home screen is the entry point — not a React Native view.
     let nav = UINavigationController(rootViewController: HomeViewController())
