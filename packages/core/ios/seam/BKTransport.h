@@ -48,6 +48,10 @@ typedef struct {
 @property (nonatomic, copy, nullable) BKSyncDictHandler stateWrite;
 @end
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void BKTransportInstall(BKTransportHooks *_Nullable hooks);
 BKTransportHooks *_Nullable BKTransportGet(void);
 
@@ -68,5 +72,9 @@ NSDictionary *BKTransportStateRead(NSDictionary *env);
 NSString *BKTransportStateObserve(NSDictionary *env, BKDictCallback onChange);
 void BKTransportStateUnobserve(NSString *obsId);
 NSDictionary *BKTransportStateWrite(NSDictionary *env);
+
+#ifdef __cplusplus
+}
+#endif
 
 NS_ASSUME_NONNULL_END

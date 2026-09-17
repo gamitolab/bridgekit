@@ -101,8 +101,11 @@ framework was the bug: Callstack fuses pods into `BrownfieldLib`, and a C++/Nitr
 
 Public `BridgeKit` is C++-free. HostApp links it as a local Swift package
 (`packages/core`) and calls `BridgekitDemoInitializer.configure()` before
-`startReactNative`. The RN Podfile sets `BRIDGEKIT_HOST_PROVIDES_RUNTIME=1` so
-`BridgeKitNitro` does not fuse a second runtime into the XCFramework. The two
+`startReactNative`. The RN Podfile sets `BRIDGEKIT_HOST_PROVIDES_RUNTIME=1`
+(build mode: host supplies the public runtime) so `BridgeKitNitro` does not
+fuse a second runtime — or the weak seam stubs — into the XCFramework.
+`ReactNativeFramework` links with `-Wl,-undefined,dynamic_lookup` so
+`BKTransport*` stay undefined until the host image provides them. The two
 sides meet through the process-wide `BKTransport` C seam.
 
 HostApp stays Node-free and pod-free. Callstack's CLI does not yet copy an

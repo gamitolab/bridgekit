@@ -1,5 +1,9 @@
 // Weak fallbacks so BridgeKitNitro can link without the public BridgeKit pod.
 // The public module compiles strong BKTransport.m; the app linker prefers those.
+//
+// Do NOT compile this file when BRIDGEKIT_HOST_PROVIDES_RUNTIME=1. If the stubs
+// live in the same image as Nitro (a fused brownfield framework), dyld never
+// reaches the host provide() — two copies of BKTransportHooksCurrent.
 
 #import "../seam/BKTransport.h"
 
