@@ -6,26 +6,54 @@ import BridgeKit
 
 // ---- Types -----------------------------------------------------------------
 
-struct GetGreetingParams {
+struct GetGreetingParams: Sendable {
     var name: String
 }
 
 // ---- Provider protocol ------------------------------------------------------
 
 /// Native-side implementation protocol for contract 'bridgekit.demo-feature'.
+#if swift(>=6.0)
+nonisolated protocol BridgekitDemoFeature: AnyObject {
+    func getGreeting(_ params: GetGreetingParams) async throws -> String
+}
+#else
 protocol BridgekitDemoFeature: AnyObject {
     func getGreeting(_ params: GetGreetingParams) async throws -> String
 }
+#endif
 
 // ---- Client protocol --------------------------------------------------------
 
 /// RN-side consumer protocol for contract 'bridgekit.demo-feature'.
+#if swift(>=6.0)
+nonisolated protocol BridgekitDemoFeatureClient: AnyObject {
+    func getGreeting(_ params: GetGreetingParams) async throws -> String
+}
+#else
 protocol BridgekitDemoFeatureClient: AnyObject {
     func getGreeting(_ params: GetGreetingParams) async throws -> String
 }
+#endif
 
 // ---- Codecs ----------------------------------------------------------------
 
+#if swift(>=6.0)
+nonisolated private enum BridgekitDemoFeatureCodecs {
+    static func encodeGetGreetingParams(_ value: GetGreetingParams) -> [String: Any?] {
+        var map = [String: Any?]()
+        map["name"] = value.name
+        return map
+    }
+
+    static func decodeGetGreetingParams(_ raw: [String: Any?], path: String = "") throws -> GetGreetingParams {
+        return GetGreetingParams(
+            name: try ((raw["name"] as Any? as? String) ?? bridgeKitThrow(path: path.isEmpty ? "name" : path + ".name", expectedType: "String", actualValue: raw["name"] as Any?))
+        )
+    }
+
+}
+#else
 private enum BridgekitDemoFeatureCodecs {
     static func encodeGetGreetingParams(_ value: GetGreetingParams) -> [String: Any?] {
         var map = [String: Any?]()
@@ -40,9 +68,31 @@ private enum BridgekitDemoFeatureCodecs {
     }
 
 }
+#endif
 
 // ---- Contract definition ---------------------------------------------------
 
+#if swift(>=6.0)
+nonisolated class BridgekitDemoFeatureContract: BridgeContractDefinition<any BridgekitDemoFeature, any BridgekitDemoFeatureClient> {
+    nonisolated init() {
+        super.init(
+            id: "bridgekit.demo-feature",
+            contractHash: "9495a290",
+            memberHashes: [
+                "methods.getGreeting": "ce4afe6b"
+            ]
+        )
+    }
+
+    nonisolated override func inbound(_ impl: any BridgekitDemoFeature) -> InboundContractAdapter {
+        return BridgekitDemoFeatureInboundAdapter(impl: impl)
+    }
+
+    nonisolated override func outbound(_ caller: OutboundCaller) -> any BridgekitDemoFeatureClient {
+        return BridgekitDemoFeatureOutboundClient(caller: caller)
+    }
+}
+#else
 class BridgekitDemoFeatureContract: BridgeContractDefinition<any BridgekitDemoFeature, any BridgekitDemoFeatureClient> {
     init() {
         super.init(
@@ -62,7 +112,39 @@ class BridgekitDemoFeatureContract: BridgeContractDefinition<any BridgekitDemoFe
         return BridgekitDemoFeatureOutboundClient(caller: caller)
     }
 }
+#endif
 
+#if swift(>=6.0)
+nonisolated private class BridgekitDemoFeatureInboundAdapter: InboundContractAdapter {
+    let impl: any BridgekitDemoFeature
+    nonisolated init(impl: any BridgekitDemoFeature) { self.impl = impl }
+
+    var stateInitials: [String: Any?] { return [:] }
+
+    func invoke(member: String, payload: [String: Any?]?) async throws -> Any? {
+        switch member {
+        case "getGreeting":
+            let decoded = try BridgekitDemoFeatureCodecs.decodeGetGreetingParams(payload ?? [:])
+            return try await impl.getGreeting(decoded)
+        default: throw BridgeKitDecodeError(field: "member", expectedType: member)
+        }
+    }
+
+    func invokeSync(member: String, payload: [String: Any?]?) throws -> Any? {
+        switch member {
+        default: throw BridgeKitDecodeError(field: "member", expectedType: member)
+        }
+    }
+
+    func openStream(member: String, payload: [String: Any?]?) -> AsyncThrowingStream<Any?, Error> {
+        switch member {
+        default: return AsyncThrowingStream { $0.finish() }
+        }
+    }
+
+    func stateStreams() -> [String: AsyncStream<Any?>] { return [:] }
+}
+#else
 private class BridgekitDemoFeatureInboundAdapter: InboundContractAdapter {
     let impl: any BridgekitDemoFeature
     init(impl: any BridgekitDemoFeature) { self.impl = impl }
@@ -92,7 +174,18 @@ private class BridgekitDemoFeatureInboundAdapter: InboundContractAdapter {
 
     func stateStreams() -> [String: AsyncStream<Any?>] { return [:] }
 }
+#endif
 
+#if swift(>=6.0)
+nonisolated private class BridgekitDemoFeatureOutboundClient: BridgekitDemoFeatureClient {
+    let caller: OutboundCaller
+    nonisolated init(caller: OutboundCaller) { self.caller = caller }
+    func getGreeting(_ params: GetGreetingParams) async throws -> String {
+        let result = try await caller.invoke(member: "getGreeting", payload: BridgekitDemoFeatureCodecs.encodeGetGreetingParams(params))
+        return try ((result as? String) ?? bridgeKitThrow(path: "result", expectedType: "String", actualValue: result))
+    }
+}
+#else
 private class BridgekitDemoFeatureOutboundClient: BridgekitDemoFeatureClient {
     let caller: OutboundCaller
     init(caller: OutboundCaller) { self.caller = caller }
@@ -101,3 +194,4 @@ private class BridgekitDemoFeatureOutboundClient: BridgekitDemoFeatureClient {
         return try ((result as? String) ?? bridgeKitThrow(path: "result", expectedType: "String", actualValue: result))
     }
 }
+#endif

@@ -6,30 +6,62 @@ import BridgeKit
 
 // ---- Types -----------------------------------------------------------------
 
-struct GreetParams {
+struct GreetParams: Sendable {
     var name: String
 }
 
 // ---- Provider protocol ------------------------------------------------------
 
 /// Native-side implementation protocol for contract 'bridgekit.localhost'.
+#if swift(>=6.0)
+nonisolated protocol BridgekitLocalhost: AnyObject {
+    func getMotto() throws -> String
+    func greet(_ params: GreetParams) async throws -> String
+    var mood: AsyncStream<String> { get }
+}
+#else
 protocol BridgekitLocalhost: AnyObject {
     func getMotto() throws -> String
     func greet(_ params: GreetParams) async throws -> String
     var mood: AsyncStream<String> { get }
 }
+#endif
 
 // ---- Client protocol --------------------------------------------------------
 
 /// RN-side consumer protocol for contract 'bridgekit.localhost'.
+#if swift(>=6.0)
+nonisolated protocol BridgekitLocalhostClient: AnyObject {
+    func getMotto() throws -> String
+    func greet(_ params: GreetParams) async throws -> String
+    var mood: AsyncStream<BridgeValue<String>> { get }
+}
+#else
 protocol BridgekitLocalhostClient: AnyObject {
     func getMotto() throws -> String
     func greet(_ params: GreetParams) async throws -> String
     var mood: AsyncStream<BridgeValue<String>> { get }
 }
+#endif
 
 // ---- Codecs ----------------------------------------------------------------
 
+#if swift(>=6.0)
+nonisolated private enum BridgekitLocalhostCodecs {
+    static func encodeGreetParams(_ value: GreetParams) -> [String: Any?] {
+        var map = [String: Any?]()
+        map["name"] = value.name
+        return map
+    }
+
+    static func decodeGreetParams(_ raw: [String: Any?], path: String = "") throws -> GreetParams {
+        return GreetParams(
+            name: try ((raw["name"] as Any? as? String) ?? bridgeKitThrow(path: path.isEmpty ? "name" : path + ".name", expectedType: "String", actualValue: raw["name"] as Any?))
+        )
+    }
+
+}
+#else
 private enum BridgekitLocalhostCodecs {
     static func encodeGreetParams(_ value: GreetParams) -> [String: Any?] {
         var map = [String: Any?]()
@@ -44,9 +76,33 @@ private enum BridgekitLocalhostCodecs {
     }
 
 }
+#endif
 
 // ---- Contract definition ---------------------------------------------------
 
+#if swift(>=6.0)
+nonisolated class BridgekitLocalhostContract: BridgeContractDefinition<any BridgekitLocalhost, any BridgekitLocalhostClient> {
+    nonisolated init() {
+        super.init(
+            id: "bridgekit.localhost",
+            contractHash: "54d414a7",
+            memberHashes: [
+                "methods.getMotto": "a338fcfe",
+                "methods.greet": "ce4afe6b",
+                "state.mood": "cfab7f4e"
+            ]
+        )
+    }
+
+    nonisolated override func inbound(_ impl: any BridgekitLocalhost) -> InboundContractAdapter {
+        return BridgekitLocalhostInboundAdapter(impl: impl)
+    }
+
+    nonisolated override func outbound(_ caller: OutboundCaller) -> any BridgekitLocalhostClient {
+        return BridgekitLocalhostOutboundClient(caller: caller)
+    }
+}
+#else
 class BridgekitLocalhostContract: BridgeContractDefinition<any BridgekitLocalhost, any BridgekitLocalhostClient> {
     init() {
         super.init(
@@ -68,7 +124,45 @@ class BridgekitLocalhostContract: BridgeContractDefinition<any BridgekitLocalhos
         return BridgekitLocalhostOutboundClient(caller: caller)
     }
 }
+#endif
 
+#if swift(>=6.0)
+nonisolated private class BridgekitLocalhostInboundAdapter: InboundContractAdapter {
+    let impl: any BridgekitLocalhost
+    nonisolated init(impl: any BridgekitLocalhost) { self.impl = impl }
+
+    var stateInitials: [String: Any?] { return [
+        "mood": "happy",
+    ] }
+
+    func invoke(member: String, payload: [String: Any?]?) async throws -> Any? {
+        switch member {
+        case "greet":
+            let decoded = try BridgekitLocalhostCodecs.decodeGreetParams(payload ?? [:])
+            return try await impl.greet(decoded)
+        default: throw BridgeKitDecodeError(field: "member", expectedType: member)
+        }
+    }
+
+    func invokeSync(member: String, payload: [String: Any?]?) throws -> Any? {
+        switch member {
+        case "getMotto":
+            return try impl.getMotto()
+        default: throw BridgeKitDecodeError(field: "member", expectedType: member)
+        }
+    }
+
+    func openStream(member: String, payload: [String: Any?]?) -> AsyncThrowingStream<Any?, Error> {
+        switch member {
+        default: return AsyncThrowingStream { $0.finish() }
+        }
+    }
+
+    func stateStreams() -> [String: AsyncStream<Any?>] { return [
+        "mood": AsyncStream<Any?> { cont in Task { for await v in self.impl.mood { cont.yield(v) }; cont.finish() } }
+    ] }
+}
+#else
 private class BridgekitLocalhostInboundAdapter: InboundContractAdapter {
     let impl: any BridgekitLocalhost
     init(impl: any BridgekitLocalhost) { self.impl = impl }
@@ -104,7 +198,37 @@ private class BridgekitLocalhostInboundAdapter: InboundContractAdapter {
         "mood": AsyncStream<Any?> { cont in Task { for await v in self.impl.mood { cont.yield(v) }; cont.finish() } }
     ] }
 }
+#endif
 
+#if swift(>=6.0)
+nonisolated private class BridgekitLocalhostOutboundClient: BridgekitLocalhostClient {
+    let caller: OutboundCaller
+    nonisolated init(caller: OutboundCaller) { self.caller = caller }
+    func getMotto() throws -> String {
+        let result = try caller.invokeSync(member: "getMotto", payload: nil)
+        return try ((result as? String) ?? bridgeKitThrow(path: "result", expectedType: "String", actualValue: result))
+    }
+    func greet(_ params: GreetParams) async throws -> String {
+        let result = try await caller.invoke(member: "greet", payload: BridgekitLocalhostCodecs.encodeGreetParams(params))
+        return try ((result as? String) ?? bridgeKitThrow(path: "result", expectedType: "String", actualValue: result))
+    }
+    var mood: AsyncStream<BridgeValue<String>> {
+        let source = caller.state(member: "mood")
+        return AsyncStream { cont in
+            let pump = Task {
+                for await bv in source {
+                    cont.yield(bv.remap { (value: Any?) -> String? in
+                        do { return try ((value as? String) ?? bridgeKitThrow(path: "mood.value", expectedType: "String", actualValue: value)) }
+                        catch { bridgeKitReportDecodeError(error, context: "state.mood"); return nil }
+                    })
+                }
+                cont.finish()
+            }
+            cont.onTermination = { _ in pump.cancel() }
+        }
+    }
+}
+#else
 private class BridgekitLocalhostOutboundClient: BridgekitLocalhostClient {
     let caller: OutboundCaller
     init(caller: OutboundCaller) { self.caller = caller }
@@ -132,3 +256,4 @@ private class BridgekitLocalhostOutboundClient: BridgekitLocalhostClient {
         }
     }
 }
+#endif

@@ -218,6 +218,10 @@ describe('Swift codec snapshots', () => {
     expect(swift).toContain(
       'return try Int64((result as? String) ?? bridgeKitThrow(path: "result", expectedType: "Int64", actualValue: result)) ?? bridgeKitThrow(path: "result", expectedType: "Int64", actualValue: result)',
     );
+    expect(swift).toContain('struct GetBoxResult: Sendable');
+    expect(swift).toContain('#if swift(>=6.0)');
+    expect(swift).toContain('nonisolated');
+    expect(swift).not.toContain('#if compiler');
     expect(swift).toContain('map["count"] = String(value.count)');
     expect(swift).toContain(
       'count: try Int64((raw["count"] as Any? as? String) ?? bridgeKitThrow(path: path.isEmpty ? "count" : path + ".count", expectedType: "Int64", actualValue: raw["count"] as Any?)) ?? bridgeKitThrow(path: path.isEmpty ? "count" : path + ".count", expectedType: "Int64", actualValue: raw["count"] as Any?)',

@@ -6,7 +6,7 @@ import BridgeKit
 
 // ---- Types -----------------------------------------------------------------
 
-struct GetUserLevelResult {
+struct GetUserLevelResult: Sendable {
     var level: Double
     var label: String
 }
@@ -14,25 +14,61 @@ struct GetUserLevelResult {
 // ---- Provider protocol ------------------------------------------------------
 
 /// Native-side implementation protocol for contract 'bridgekit.demo-jsinfo'.
+#if swift(>=6.0)
+nonisolated protocol BridgekitDemoJsinfo: AnyObject {
+    func getReactNativeVersion() async throws -> String
+    func getUserLevel() async throws -> GetUserLevelResult
+    func getUserSegments() async throws -> [String]
+    func clockTicks() -> AsyncStream<Double>
+}
+#else
 protocol BridgekitDemoJsinfo: AnyObject {
     func getReactNativeVersion() async throws -> String
     func getUserLevel() async throws -> GetUserLevelResult
     func getUserSegments() async throws -> [String]
     func clockTicks() -> AsyncStream<Double>
 }
+#endif
 
 // ---- Client protocol --------------------------------------------------------
 
 /// RN-side consumer protocol for contract 'bridgekit.demo-jsinfo'.
+#if swift(>=6.0)
+nonisolated protocol BridgekitDemoJsinfoClient: AnyObject {
+    func getReactNativeVersion() async throws -> String
+    func getUserLevel() async throws -> GetUserLevelResult
+    func getUserSegments() async throws -> [String]
+    func clockTicks() -> AsyncStream<Double>
+}
+#else
 protocol BridgekitDemoJsinfoClient: AnyObject {
     func getReactNativeVersion() async throws -> String
     func getUserLevel() async throws -> GetUserLevelResult
     func getUserSegments() async throws -> [String]
     func clockTicks() -> AsyncStream<Double>
 }
+#endif
 
 // ---- Codecs ----------------------------------------------------------------
 
+#if swift(>=6.0)
+nonisolated private enum BridgekitDemoJsinfoCodecs {
+    static func encodeGetUserLevelResult(_ value: GetUserLevelResult) -> [String: Any?] {
+        var map = [String: Any?]()
+        map["level"] = value.level
+        map["label"] = value.label
+        return map
+    }
+
+    static func decodeGetUserLevelResult(_ raw: [String: Any?], path: String = "") throws -> GetUserLevelResult {
+        return GetUserLevelResult(
+            level: try ((raw["level"] as Any? as? Double) ?? Double(try ((raw["level"] as Any? as? Int) ?? bridgeKitThrow(path: path.isEmpty ? "level" : path + ".level", expectedType: "Double", actualValue: raw["level"] as Any?)))),
+            label: try ((raw["label"] as Any? as? String) ?? bridgeKitThrow(path: path.isEmpty ? "label" : path + ".label", expectedType: "String", actualValue: raw["label"] as Any?))
+        )
+    }
+
+}
+#else
 private enum BridgekitDemoJsinfoCodecs {
     static func encodeGetUserLevelResult(_ value: GetUserLevelResult) -> [String: Any?] {
         var map = [String: Any?]()
@@ -49,9 +85,34 @@ private enum BridgekitDemoJsinfoCodecs {
     }
 
 }
+#endif
 
 // ---- Contract definition ---------------------------------------------------
 
+#if swift(>=6.0)
+nonisolated class BridgekitDemoJsinfoContract: BridgeContractDefinition<any BridgekitDemoJsinfo, any BridgekitDemoJsinfoClient> {
+    nonisolated init() {
+        super.init(
+            id: "bridgekit.demo-jsinfo",
+            contractHash: "9e097f3b",
+            memberHashes: [
+                "methods.getReactNativeVersion": "ef2c701f",
+                "methods.getUserLevel": "920ab966",
+                "methods.getUserSegments": "314af6df",
+                "streams.clockTicks": "4725c2c3"
+            ]
+        )
+    }
+
+    nonisolated override func inbound(_ impl: any BridgekitDemoJsinfo) -> InboundContractAdapter {
+        return BridgekitDemoJsinfoInboundAdapter(impl: impl)
+    }
+
+    nonisolated override func outbound(_ caller: OutboundCaller) -> any BridgekitDemoJsinfoClient {
+        return BridgekitDemoJsinfoOutboundClient(caller: caller)
+    }
+}
+#else
 class BridgekitDemoJsinfoContract: BridgeContractDefinition<any BridgekitDemoJsinfo, any BridgekitDemoJsinfoClient> {
     init() {
         super.init(
@@ -74,7 +135,45 @@ class BridgekitDemoJsinfoContract: BridgeContractDefinition<any BridgekitDemoJsi
         return BridgekitDemoJsinfoOutboundClient(caller: caller)
     }
 }
+#endif
 
+#if swift(>=6.0)
+nonisolated private class BridgekitDemoJsinfoInboundAdapter: InboundContractAdapter {
+    let impl: any BridgekitDemoJsinfo
+    nonisolated init(impl: any BridgekitDemoJsinfo) { self.impl = impl }
+
+    var stateInitials: [String: Any?] { return [:] }
+
+    func invoke(member: String, payload: [String: Any?]?) async throws -> Any? {
+        switch member {
+        case "getReactNativeVersion":
+            return try await impl.getReactNativeVersion()
+        case "getUserLevel":
+            return BridgekitDemoJsinfoCodecs.encodeGetUserLevelResult(try await impl.getUserLevel())
+        case "getUserSegments":
+            return try await impl.getUserSegments()
+        default: throw BridgeKitDecodeError(field: "member", expectedType: member)
+        }
+    }
+
+    func invokeSync(member: String, payload: [String: Any?]?) throws -> Any? {
+        switch member {
+        default: throw BridgeKitDecodeError(field: "member", expectedType: member)
+        }
+    }
+
+    func openStream(member: String, payload: [String: Any?]?) -> AsyncThrowingStream<Any?, Error> {
+        switch member {
+        case "clockTicks":
+            let src = impl.clockTicks()
+            return AsyncThrowingStream { cont in Task { for await item in src { cont.yield(item) }; cont.finish() } }
+        default: return AsyncThrowingStream { $0.finish() }
+        }
+    }
+
+    func stateStreams() -> [String: AsyncStream<Any?>] { return [:] }
+}
+#else
 private class BridgekitDemoJsinfoInboundAdapter: InboundContractAdapter {
     let impl: any BridgekitDemoJsinfo
     init(impl: any BridgekitDemoJsinfo) { self.impl = impl }
@@ -110,7 +209,30 @@ private class BridgekitDemoJsinfoInboundAdapter: InboundContractAdapter {
 
     func stateStreams() -> [String: AsyncStream<Any?>] { return [:] }
 }
+#endif
 
+#if swift(>=6.0)
+nonisolated private class BridgekitDemoJsinfoOutboundClient: BridgekitDemoJsinfoClient {
+    let caller: OutboundCaller
+    nonisolated init(caller: OutboundCaller) { self.caller = caller }
+    func getReactNativeVersion() async throws -> String {
+        let result = try await caller.invoke(member: "getReactNativeVersion", payload: nil)
+        return try ((result as? String) ?? bridgeKitThrow(path: "result", expectedType: "String", actualValue: result))
+    }
+    func getUserLevel() async throws -> GetUserLevelResult {
+        let result = try await caller.invoke(member: "getUserLevel", payload: nil)
+        return try BridgekitDemoJsinfoCodecs.decodeGetUserLevelResult(try ((result as? [String: Any?]) ?? bridgeKitThrow(path: "result", expectedType: "GetUserLevelResult", actualValue: result)), path: "result")
+    }
+    func getUserSegments() async throws -> [String] {
+        let result = try await caller.invoke(member: "getUserSegments", payload: nil)
+        return try ((result as? [Any?]) ?? bridgeKitThrow(path: "result", expectedType: "Array", actualValue: result)).enumerated().map { index, item in try ((item as? String) ?? bridgeKitThrow(path: ("result") + "[\(index)]", expectedType: "String", actualValue: item)) }
+    }
+    func clockTicks() -> AsyncStream<Double> {
+        let throwing = caller.stream(member: "clockTicks", payload: nil)
+        return AsyncStream { cont in Task { do { for try await item in throwing { cont.yield(try ((item as? Double) ?? Double(try ((item as? Int) ?? bridgeKitThrow(path: "clockTicks.value", expectedType: "Double", actualValue: item))))) } } catch { bridgeKitReportDecodeError(error, context: "stream.clockTicks"); cont.finish() } } }
+    }
+}
+#else
 private class BridgekitDemoJsinfoOutboundClient: BridgekitDemoJsinfoClient {
     let caller: OutboundCaller
     init(caller: OutboundCaller) { self.caller = caller }
@@ -131,3 +253,4 @@ private class BridgekitDemoJsinfoOutboundClient: BridgekitDemoJsinfoClient {
         return AsyncStream { cont in Task { do { for try await item in throwing { cont.yield(try ((item as? Double) ?? Double(try ((item as? Int) ?? bridgeKitThrow(path: "clockTicks.value", expectedType: "Double", actualValue: item))))) } } catch { bridgeKitReportDecodeError(error, context: "stream.clockTicks"); cont.finish() } } }
     }
 }
+#endif

@@ -6,11 +6,11 @@ import BridgeKit
 
 // ---- Types -----------------------------------------------------------------
 
-struct GreetFromJsParams {
+struct GreetFromJsParams: Sendable {
     var name: String
 }
 
-struct OnNativeEventParams {
+struct OnNativeEventParams: Sendable {
     var type: String
     var payload: Any? = nil
 }
@@ -18,25 +18,73 @@ struct OnNativeEventParams {
 // ---- Provider protocol ------------------------------------------------------
 
 /// Native-side implementation protocol for contract 'bridgekit.demo-reverse'.
+#if swift(>=6.0)
+nonisolated protocol BridgekitDemoReverse: AnyObject {
+    func greetFromJs(_ params: GreetFromJsParams) async throws -> String
+    func onNativeEvent(_ params: OnNativeEventParams)
+    func jsCounter() -> AsyncStream<Double>
+    var jsStatus: AsyncStream<String> { get }
+}
+#else
 protocol BridgekitDemoReverse: AnyObject {
     func greetFromJs(_ params: GreetFromJsParams) async throws -> String
     func onNativeEvent(_ params: OnNativeEventParams)
     func jsCounter() -> AsyncStream<Double>
     var jsStatus: AsyncStream<String> { get }
 }
+#endif
 
 // ---- Client protocol --------------------------------------------------------
 
 /// RN-side consumer protocol for contract 'bridgekit.demo-reverse'.
+#if swift(>=6.0)
+nonisolated protocol BridgekitDemoReverseClient: AnyObject {
+    func greetFromJs(_ params: GreetFromJsParams) async throws -> String
+    func onNativeEvent(_ params: OnNativeEventParams)
+    func jsCounter() -> AsyncStream<Double>
+    var jsStatus: AsyncStream<BridgeValue<String>> { get }
+}
+#else
 protocol BridgekitDemoReverseClient: AnyObject {
     func greetFromJs(_ params: GreetFromJsParams) async throws -> String
     func onNativeEvent(_ params: OnNativeEventParams)
     func jsCounter() -> AsyncStream<Double>
     var jsStatus: AsyncStream<BridgeValue<String>> { get }
 }
+#endif
 
 // ---- Codecs ----------------------------------------------------------------
 
+#if swift(>=6.0)
+nonisolated private enum BridgekitDemoReverseCodecs {
+    static func encodeGreetFromJsParams(_ value: GreetFromJsParams) -> [String: Any?] {
+        var map = [String: Any?]()
+        map["name"] = value.name
+        return map
+    }
+
+    static func decodeGreetFromJsParams(_ raw: [String: Any?], path: String = "") throws -> GreetFromJsParams {
+        return GreetFromJsParams(
+            name: try ((raw["name"] as Any? as? String) ?? bridgeKitThrow(path: path.isEmpty ? "name" : path + ".name", expectedType: "String", actualValue: raw["name"] as Any?))
+        )
+    }
+
+    static func encodeOnNativeEventParams(_ value: OnNativeEventParams) -> [String: Any?] {
+        var map = [String: Any?]()
+        map["type"] = value.type
+        if let v = value.payload { map["payload"] = v }
+        return map
+    }
+
+    static func decodeOnNativeEventParams(_ raw: [String: Any?], path: String = "") throws -> OnNativeEventParams {
+        return OnNativeEventParams(
+            type: try ((raw["type"] as Any? as? String) ?? bridgeKitThrow(path: path.isEmpty ? "type" : path + ".type", expectedType: "String", actualValue: raw["type"] as Any?)),
+            payload: raw["payload"] == nil ? nil : (raw["payload"] as Any?)
+        )
+    }
+
+}
+#else
 private enum BridgekitDemoReverseCodecs {
     static func encodeGreetFromJsParams(_ value: GreetFromJsParams) -> [String: Any?] {
         var map = [String: Any?]()
@@ -65,9 +113,34 @@ private enum BridgekitDemoReverseCodecs {
     }
 
 }
+#endif
 
 // ---- Contract definition ---------------------------------------------------
 
+#if swift(>=6.0)
+nonisolated class BridgekitDemoReverseContract: BridgeContractDefinition<any BridgekitDemoReverse, any BridgekitDemoReverseClient> {
+    nonisolated init() {
+        super.init(
+            id: "bridgekit.demo-reverse",
+            contractHash: "d0f9e5e7",
+            memberHashes: [
+                "methods.greetFromJs": "ce4afe6b",
+                "methods.onNativeEvent": "742296da",
+                "streams.jsCounter": "4725c2c3",
+                "state.jsStatus": "cfab7f4e"
+            ]
+        )
+    }
+
+    nonisolated override func inbound(_ impl: any BridgekitDemoReverse) -> InboundContractAdapter {
+        return BridgekitDemoReverseInboundAdapter(impl: impl)
+    }
+
+    nonisolated override func outbound(_ caller: OutboundCaller) -> any BridgekitDemoReverseClient {
+        return BridgekitDemoReverseOutboundClient(caller: caller)
+    }
+}
+#else
 class BridgekitDemoReverseContract: BridgeContractDefinition<any BridgekitDemoReverse, any BridgekitDemoReverseClient> {
     init() {
         super.init(
@@ -90,7 +163,50 @@ class BridgekitDemoReverseContract: BridgeContractDefinition<any BridgekitDemoRe
         return BridgekitDemoReverseOutboundClient(caller: caller)
     }
 }
+#endif
 
+#if swift(>=6.0)
+nonisolated private class BridgekitDemoReverseInboundAdapter: InboundContractAdapter {
+    let impl: any BridgekitDemoReverse
+    nonisolated init(impl: any BridgekitDemoReverse) { self.impl = impl }
+
+    var stateInitials: [String: Any?] { return [
+        "jsStatus": "js-idle",
+    ] }
+
+    func invoke(member: String, payload: [String: Any?]?) async throws -> Any? {
+        switch member {
+        case "greetFromJs":
+            let decoded = try BridgekitDemoReverseCodecs.decodeGreetFromJsParams(payload ?? [:])
+            return try await impl.greetFromJs(decoded)
+        case "onNativeEvent":
+            let decoded = try BridgekitDemoReverseCodecs.decodeOnNativeEventParams(payload ?? [:])
+            impl.onNativeEvent(decoded)
+            return nil
+        default: throw BridgeKitDecodeError(field: "member", expectedType: member)
+        }
+    }
+
+    func invokeSync(member: String, payload: [String: Any?]?) throws -> Any? {
+        switch member {
+        default: throw BridgeKitDecodeError(field: "member", expectedType: member)
+        }
+    }
+
+    func openStream(member: String, payload: [String: Any?]?) -> AsyncThrowingStream<Any?, Error> {
+        switch member {
+        case "jsCounter":
+            let src = impl.jsCounter()
+            return AsyncThrowingStream { cont in Task { for await item in src { cont.yield(item) }; cont.finish() } }
+        default: return AsyncThrowingStream { $0.finish() }
+        }
+    }
+
+    func stateStreams() -> [String: AsyncStream<Any?>] { return [
+        "jsStatus": AsyncStream<Any?> { cont in Task { for await v in self.impl.jsStatus { cont.yield(v) }; cont.finish() } }
+    ] }
+}
+#else
 private class BridgekitDemoReverseInboundAdapter: InboundContractAdapter {
     let impl: any BridgekitDemoReverse
     init(impl: any BridgekitDemoReverse) { self.impl = impl }
@@ -131,7 +247,40 @@ private class BridgekitDemoReverseInboundAdapter: InboundContractAdapter {
         "jsStatus": AsyncStream<Any?> { cont in Task { for await v in self.impl.jsStatus { cont.yield(v) }; cont.finish() } }
     ] }
 }
+#endif
 
+#if swift(>=6.0)
+nonisolated private class BridgekitDemoReverseOutboundClient: BridgekitDemoReverseClient {
+    let caller: OutboundCaller
+    nonisolated init(caller: OutboundCaller) { self.caller = caller }
+    func greetFromJs(_ params: GreetFromJsParams) async throws -> String {
+        let result = try await caller.invoke(member: "greetFromJs", payload: BridgekitDemoReverseCodecs.encodeGreetFromJsParams(params))
+        return try ((result as? String) ?? bridgeKitThrow(path: "result", expectedType: "String", actualValue: result))
+    }
+    func onNativeEvent(_ params: OnNativeEventParams) {
+        caller.fire(member: "onNativeEvent", payload: BridgekitDemoReverseCodecs.encodeOnNativeEventParams(params))
+    }
+    func jsCounter() -> AsyncStream<Double> {
+        let throwing = caller.stream(member: "jsCounter", payload: nil)
+        return AsyncStream { cont in Task { do { for try await item in throwing { cont.yield(try ((item as? Double) ?? Double(try ((item as? Int) ?? bridgeKitThrow(path: "jsCounter.value", expectedType: "Double", actualValue: item))))) } } catch { bridgeKitReportDecodeError(error, context: "stream.jsCounter"); cont.finish() } } }
+    }
+    var jsStatus: AsyncStream<BridgeValue<String>> {
+        let source = caller.state(member: "jsStatus")
+        return AsyncStream { cont in
+            let pump = Task {
+                for await bv in source {
+                    cont.yield(bv.remap { (value: Any?) -> String? in
+                        do { return try ((value as? String) ?? bridgeKitThrow(path: "jsStatus.value", expectedType: "String", actualValue: value)) }
+                        catch { bridgeKitReportDecodeError(error, context: "state.jsStatus"); return nil }
+                    })
+                }
+                cont.finish()
+            }
+            cont.onTermination = { _ in pump.cancel() }
+        }
+    }
+}
+#else
 private class BridgekitDemoReverseOutboundClient: BridgekitDemoReverseClient {
     let caller: OutboundCaller
     init(caller: OutboundCaller) { self.caller = caller }
@@ -162,3 +311,4 @@ private class BridgekitDemoReverseOutboundClient: BridgekitDemoReverseClient {
         }
     }
 }
+#endif
