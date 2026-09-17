@@ -105,12 +105,17 @@ jobs:
 
           # iOS payload. Without these the whole iOS half of the package could
           # silently vanish from a release and every job here would stay green.
-          grep -Fx "package/BridgeKit.podspec" "$tmp/core-list.txt"
           grep -Fx "package/react-native.config.js" "$tmp/core-list.txt"
           grep -Fx "package/nitro.json" "$tmp/core-list.txt"
           grep -Fx "package/ios/engine/Router.swift" "$tmp/core-list.txt"
           grep -Fx "package/nitrogen/generated/ios/BridgeKitNitro+autolinking.rb" "$tmp/core-list.txt"
           grep -Fx "package/BridgeKitNitro.podspec" "$tmp/core-list.txt"
+          grep -Fx "package/ios/BridgeKit.podspec" "$tmp/core-list.txt"
+          grep -Fx "package/scripts/cocoapods_inject_public_runtime.rb" "$tmp/core-list.txt"
+          if grep -Fx "package/BridgeKit.podspec" "$tmp/core-list.txt"; then
+            echo "package-root BridgeKit.podspec must not ship; Expo would autolink it" >&2
+            exit 1
+          fi
           grep -q "package/ios-facade/.*\.swiftinterface" "$tmp/core-list.txt"
 
           cli_tarball="$(cd packages/cli && npm pack --json --pack-destination "$tmp" | node -e "const c=require('fs').readFileSync(0,'utf8');const i=c.lastIndexOf('\n[');process.stdout.write(JSON.parse(c.slice(i>=0?i+1:c.indexOf('[')))[0].filename)")"
@@ -232,3 +237,7 @@ jobs:
       - name: Run iOS engine tests
         working-directory: packages/core
         run: swift test
+
+      # Framework-style Clang module import of BKTransport.h (no bridging header).
+      - name: Typecheck Nitro seam without a bridging header
+        run: bash packages/core/scripts/ios-linkage-check.sh

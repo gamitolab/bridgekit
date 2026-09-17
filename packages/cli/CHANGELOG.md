@@ -12,6 +12,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+## [0.3.0-alpha.2] - 2026-09-17
+
+### Changed
+
+- Version aligned with `@malopezr7/bridgekit` 0.3.0-alpha.2.
+
 ## [0.3.0-alpha.1] - 2026-09-17
 
 ### Added

@@ -10,15 +10,22 @@ version, so the changelog and this file agree on what a given release contains.
 
 ## Open
 
-### BF-IOS-01 — Callstack `package:ios` still needs a host-side Swift package
+### BF-IOS-01 — packaged `package:ios` still needs a host-side Swift package
 
 The public `BridgeKit` module is C++-free. Getting it into a Node-free host is
 done by adding `packages/core` as a local Swift package (see
-`apps/example-callstack-brownfield/ios/HostApp`). Callstack's CLI does not yet
-copy an arbitrary xcframework into `spm-artifacts/` the way it copies
-`ExpoModulesCore`. A `BRIDGEKIT_HOST_PROVIDES_RUNTIME=1` Podfile env keeps the
-public module out of `BrownfieldLib` so there is one runtime. Upstream issue
-for copying extra xcframeworks is not filed in this change.
+`apps/example-callstack-brownfield/ios/HostApp`). `@callstack/react-native-brownfield`
+does not yet copy an arbitrary xcframework into `spm-artifacts/` the way it
+copies `ExpoModulesCore`. `BRIDGEKIT_HOST_PROVIDES_RUNTIME=1` keeps the public
+module out of the packaged RN framework so there is one runtime.
+
+Draft upstream issue (not filed):
+
+> `package:ios` copies a hard-coded allowlist of xcframeworks into
+> `spm-artifacts/` (e.g. ExpoModulesCore). A third-party Swift module that the
+> **host** must `import` (not fuse into BrownfieldLib) has no hook to join that
+> list. Please accept extra xcframeworks / Swift package products so a
+> C++-free API can ship beside the RN framework without a local path package.
 
 ### RT-IOS-01 — iOS has no diagnostics module
 
