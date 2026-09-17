@@ -134,15 +134,15 @@ export function assembleSwiftContractFile(parts: {
   stateInitials: string[];
   stateFlowEntries: string[];
   needsFoundationImport: boolean;
-    needsBridgeKitDecodeError: boolean;
-    moduleName: string;
-  }): EmitResult {
-    const {
-      fileName,
-      id,
-      hash,
-      className,
-      codegenVersion,
+  needsBridgeKitDecodeError: boolean;
+  moduleName: string;
+}): EmitResult {
+  const {
+    fileName,
+    id,
+    hash,
+    className,
+    codegenVersion,
     typeDecls,
     providerMethods,
     clientMethods,

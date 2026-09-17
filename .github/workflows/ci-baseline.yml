@@ -218,9 +218,12 @@ jobs:
             -not -path '*__tests__*' -not -path '*/nitro/*' -not -name 'AnyMapCodec.swift' | sort)"
           echo "$files" | sed 's/^/  /'
           # shellcheck disable=SC2086
+          # BKTransportInstall.swift talks to the C/ObjC seam; without the
+          # header, BKTransportHooks is invisible (SPM/CocoaPods supply it).
           swiftc -typecheck \
             -sdk "$(xcrun --sdk iphonesimulator --show-sdk-path)" \
             -target arm64-apple-ios15.1-simulator \
+            -import-objc-header packages/core/ios/seam/BKTransport.h \
             $files
 
       # The engine is Foundation-only, so its XCTests run natively on the host —
