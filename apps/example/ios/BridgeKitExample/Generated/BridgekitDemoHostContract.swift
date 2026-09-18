@@ -4,6 +4,17 @@
 
 import BridgeKit
 
+#if swift(>=6.0)
+nonisolated private func bridgeKitYieldSending<T>(_ continuation: AsyncStream<T>.Continuation, _ value: T) {
+    nonisolated(unsafe) let boxed = value
+    continuation.yield(boxed)
+}
+nonisolated private func bridgeKitYieldThrowingSending<T>(_ continuation: AsyncThrowingStream<T, Error>.Continuation, _ value: T) {
+    nonisolated(unsafe) let boxed = value
+    continuation.yield(boxed)
+}
+#endif
+
 // ---- Types -----------------------------------------------------------------
 
 struct PingParams: Sendable {
@@ -206,7 +217,7 @@ class BridgekitDemoHostContract: BridgeContractDefinition<any BridgekitDemoHost,
 #endif
 
 #if swift(>=6.0)
-nonisolated private class BridgekitDemoHostInboundAdapter: InboundContractAdapter {
+nonisolated private final class BridgekitDemoHostInboundAdapter: InboundContractAdapter, @unchecked Sendable {
     let impl: any BridgekitDemoHost
     nonisolated init(impl: any BridgekitDemoHost) { self.impl = impl }
 
@@ -238,18 +249,42 @@ nonisolated private class BridgekitDemoHostInboundAdapter: InboundContractAdapte
     func openStream(member: String, payload: [String: Any?]?) -> AsyncThrowingStream<Any?, Error> {
         switch member {
         case "ticker":
-            let src = impl.ticker()
-            return AsyncThrowingStream { cont in Task { for await item in src { cont.yield(item) }; cont.finish() } }
+            let (stream, continuation) = AsyncThrowingStream<Any?, Error>.makeStream()
+            let pump = Task {
+                for await item in self.impl.ticker() {
+                    bridgeKitYieldThrowingSending(continuation, item)
+                }
+                continuation.finish()
+            }
+            continuation.onTermination = { _ in pump.cancel() }
+            return stream
         case "echoes":
-            let src = impl.echoes()
-            return AsyncThrowingStream { cont in Task { for await item in src { cont.yield(item) }; cont.finish() } }
+            let (stream, continuation) = AsyncThrowingStream<Any?, Error>.makeStream()
+            let pump = Task {
+                for await item in self.impl.echoes() {
+                    bridgeKitYieldThrowingSending(continuation, item)
+                }
+                continuation.finish()
+            }
+            continuation.onTermination = { _ in pump.cancel() }
+            return stream
         default: return AsyncThrowingStream { $0.finish() }
         }
     }
 
-    func stateStreams() -> [String: AsyncStream<Any?>] { return [
-        "counter": AsyncStream<Any?> { cont in Task { for await v in self.impl.counter { cont.yield(v) }; cont.finish() } }
-    ] }
+    func stateStreams() -> [String: AsyncStream<Any?>] {
+        let (bkCounterStream, bkCounterCont) = AsyncStream<Any?>.makeStream()
+        let bkCounterPump = Task {
+            for await v in self.impl.counter {
+                bridgeKitYieldSending(bkCounterCont, v)
+            }
+            bkCounterCont.finish()
+        }
+        bkCounterCont.onTermination = { _ in bkCounterPump.cancel() }
+        return [
+            "counter": bkCounterStream
+        ]
+    }
 }
 #else
 private class BridgekitDemoHostInboundAdapter: InboundContractAdapter {
@@ -300,7 +335,7 @@ private class BridgekitDemoHostInboundAdapter: InboundContractAdapter {
 #endif
 
 #if swift(>=6.0)
-nonisolated private class BridgekitDemoHostOutboundClient: BridgekitDemoHostClient {
+nonisolated private final class BridgekitDemoHostOutboundClient: BridgekitDemoHostClient, @unchecked Sendable {
     let caller: OutboundCaller
     nonisolated init(caller: OutboundCaller) { self.caller = caller }
     func ping(_ params: PingParams) async throws -> PingResult {
@@ -315,27 +350,50 @@ nonisolated private class BridgekitDemoHostOutboundClient: BridgekitDemoHostClie
         caller.fire(member: "say", payload: BridgekitDemoHostCodecs.encodeSayParams(params))
     }
     func ticker() -> AsyncStream<Double> {
-        let throwing = caller.stream(member: "ticker", payload: nil)
-        return AsyncStream { cont in Task { do { for try await item in throwing { cont.yield(try ((item as? Double) ?? Double(try ((item as? Int) ?? bridgeKitThrow(path: "ticker.value", expectedType: "Double", actualValue: item))))) } } catch { bridgeKitReportDecodeError(error, context: "stream.ticker"); cont.finish() } } }
+        let (stream, continuation) = AsyncStream<Double>.makeStream()
+        let pump = Task {
+            do {
+                for try await item in self.caller.stream(member: "ticker", payload: nil) {
+                    bridgeKitYieldSending(continuation, try ((item as? Double) ?? Double(try ((item as? Int) ?? bridgeKitThrow(path: "ticker.value", expectedType: "Double", actualValue: item)))))
+                }
+                continuation.finish()
+            } catch {
+                bridgeKitReportDecodeError(error, context: "stream.ticker")
+                continuation.finish()
+            }
+        }
+        continuation.onTermination = { _ in pump.cancel() }
+        return stream
     }
     func echoes() -> AsyncStream<String> {
-        let throwing = caller.stream(member: "echoes", payload: nil)
-        return AsyncStream { cont in Task { do { for try await item in throwing { cont.yield(try ((item as? String) ?? bridgeKitThrow(path: "echoes.value", expectedType: "String", actualValue: item))) } } catch { bridgeKitReportDecodeError(error, context: "stream.echoes"); cont.finish() } } }
+        let (stream, continuation) = AsyncStream<String>.makeStream()
+        let pump = Task {
+            do {
+                for try await item in self.caller.stream(member: "echoes", payload: nil) {
+                    bridgeKitYieldSending(continuation, try ((item as? String) ?? bridgeKitThrow(path: "echoes.value", expectedType: "String", actualValue: item)))
+                }
+                continuation.finish()
+            } catch {
+                bridgeKitReportDecodeError(error, context: "stream.echoes")
+                continuation.finish()
+            }
+        }
+        continuation.onTermination = { _ in pump.cancel() }
+        return stream
     }
     var counter: AsyncStream<BridgeValue<Double>> {
-        let source = caller.state(member: "counter")
-        return AsyncStream { cont in
-            let pump = Task {
-                for await bv in source {
-                    cont.yield(bv.remap { (value: Any?) -> Double? in
+        let (stream, continuation) = AsyncStream<BridgeValue<Double>>.makeStream()
+        let pump = Task {
+            for await bv in self.caller.state(member: "counter") {
+                bridgeKitYieldSending(continuation, bv.remap { (value: Any?) -> Double? in
                         do { return try ((value as? Double) ?? Double(try ((value as? Int) ?? bridgeKitThrow(path: "counter.value", expectedType: "Double", actualValue: value)))) }
                         catch { bridgeKitReportDecodeError(error, context: "state.counter"); return nil }
                     })
-                }
-                cont.finish()
             }
-            cont.onTermination = { _ in pump.cancel() }
+            continuation.finish()
         }
+        continuation.onTermination = { _ in pump.cancel() }
+        return stream
     }
 }
 #else

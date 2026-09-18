@@ -4,6 +4,17 @@
 
 import BridgeKit
 
+#if swift(>=6.0)
+nonisolated private func bridgeKitYieldSending<T>(_ continuation: AsyncStream<T>.Continuation, _ value: T) {
+    nonisolated(unsafe) let boxed = value
+    continuation.yield(boxed)
+}
+nonisolated private func bridgeKitYieldThrowingSending<T>(_ continuation: AsyncThrowingStream<T, Error>.Continuation, _ value: T) {
+    nonisolated(unsafe) let boxed = value
+    continuation.yield(boxed)
+}
+#endif
+
 // ---- Types -----------------------------------------------------------------
 
 struct GreetFromJsParams: Sendable {
@@ -166,7 +177,7 @@ class BridgekitDemoReverseContract: BridgeContractDefinition<any BridgekitDemoRe
 #endif
 
 #if swift(>=6.0)
-nonisolated private class BridgekitDemoReverseInboundAdapter: InboundContractAdapter {
+nonisolated private final class BridgekitDemoReverseInboundAdapter: InboundContractAdapter, @unchecked Sendable {
     let impl: any BridgekitDemoReverse
     nonisolated init(impl: any BridgekitDemoReverse) { self.impl = impl }
 
@@ -196,15 +207,32 @@ nonisolated private class BridgekitDemoReverseInboundAdapter: InboundContractAda
     func openStream(member: String, payload: [String: Any?]?) -> AsyncThrowingStream<Any?, Error> {
         switch member {
         case "jsCounter":
-            let src = impl.jsCounter()
-            return AsyncThrowingStream { cont in Task { for await item in src { cont.yield(item) }; cont.finish() } }
+            let (stream, continuation) = AsyncThrowingStream<Any?, Error>.makeStream()
+            let pump = Task {
+                for await item in self.impl.jsCounter() {
+                    bridgeKitYieldThrowingSending(continuation, item)
+                }
+                continuation.finish()
+            }
+            continuation.onTermination = { _ in pump.cancel() }
+            return stream
         default: return AsyncThrowingStream { $0.finish() }
         }
     }
 
-    func stateStreams() -> [String: AsyncStream<Any?>] { return [
-        "jsStatus": AsyncStream<Any?> { cont in Task { for await v in self.impl.jsStatus { cont.yield(v) }; cont.finish() } }
-    ] }
+    func stateStreams() -> [String: AsyncStream<Any?>] {
+        let (bkJsStatusStream, bkJsStatusCont) = AsyncStream<Any?>.makeStream()
+        let bkJsStatusPump = Task {
+            for await v in self.impl.jsStatus {
+                bridgeKitYieldSending(bkJsStatusCont, v)
+            }
+            bkJsStatusCont.finish()
+        }
+        bkJsStatusCont.onTermination = { _ in bkJsStatusPump.cancel() }
+        return [
+            "jsStatus": bkJsStatusStream
+        ]
+    }
 }
 #else
 private class BridgekitDemoReverseInboundAdapter: InboundContractAdapter {
@@ -250,7 +278,7 @@ private class BridgekitDemoReverseInboundAdapter: InboundContractAdapter {
 #endif
 
 #if swift(>=6.0)
-nonisolated private class BridgekitDemoReverseOutboundClient: BridgekitDemoReverseClient {
+nonisolated private final class BridgekitDemoReverseOutboundClient: BridgekitDemoReverseClient, @unchecked Sendable {
     let caller: OutboundCaller
     nonisolated init(caller: OutboundCaller) { self.caller = caller }
     func greetFromJs(_ params: GreetFromJsParams) async throws -> String {
@@ -261,23 +289,34 @@ nonisolated private class BridgekitDemoReverseOutboundClient: BridgekitDemoRever
         caller.fire(member: "onNativeEvent", payload: BridgekitDemoReverseCodecs.encodeOnNativeEventParams(params))
     }
     func jsCounter() -> AsyncStream<Double> {
-        let throwing = caller.stream(member: "jsCounter", payload: nil)
-        return AsyncStream { cont in Task { do { for try await item in throwing { cont.yield(try ((item as? Double) ?? Double(try ((item as? Int) ?? bridgeKitThrow(path: "jsCounter.value", expectedType: "Double", actualValue: item))))) } } catch { bridgeKitReportDecodeError(error, context: "stream.jsCounter"); cont.finish() } } }
+        let (stream, continuation) = AsyncStream<Double>.makeStream()
+        let pump = Task {
+            do {
+                for try await item in self.caller.stream(member: "jsCounter", payload: nil) {
+                    bridgeKitYieldSending(continuation, try ((item as? Double) ?? Double(try ((item as? Int) ?? bridgeKitThrow(path: "jsCounter.value", expectedType: "Double", actualValue: item)))))
+                }
+                continuation.finish()
+            } catch {
+                bridgeKitReportDecodeError(error, context: "stream.jsCounter")
+                continuation.finish()
+            }
+        }
+        continuation.onTermination = { _ in pump.cancel() }
+        return stream
     }
     var jsStatus: AsyncStream<BridgeValue<String>> {
-        let source = caller.state(member: "jsStatus")
-        return AsyncStream { cont in
-            let pump = Task {
-                for await bv in source {
-                    cont.yield(bv.remap { (value: Any?) -> String? in
+        let (stream, continuation) = AsyncStream<BridgeValue<String>>.makeStream()
+        let pump = Task {
+            for await bv in self.caller.state(member: "jsStatus") {
+                bridgeKitYieldSending(continuation, bv.remap { (value: Any?) -> String? in
                         do { return try ((value as? String) ?? bridgeKitThrow(path: "jsStatus.value", expectedType: "String", actualValue: value)) }
                         catch { bridgeKitReportDecodeError(error, context: "state.jsStatus"); return nil }
                     })
-                }
-                cont.finish()
             }
-            cont.onTermination = { _ in pump.cancel() }
+            continuation.finish()
         }
+        continuation.onTermination = { _ in pump.cancel() }
+        return stream
     }
 }
 #else

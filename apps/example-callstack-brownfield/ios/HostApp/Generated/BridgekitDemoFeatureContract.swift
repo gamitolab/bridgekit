@@ -4,6 +4,17 @@
 
 import BridgeKit
 
+#if swift(>=6.0)
+nonisolated private func bridgeKitYieldSending<T>(_ continuation: AsyncStream<T>.Continuation, _ value: T) {
+    nonisolated(unsafe) let boxed = value
+    continuation.yield(boxed)
+}
+nonisolated private func bridgeKitYieldThrowingSending<T>(_ continuation: AsyncThrowingStream<T, Error>.Continuation, _ value: T) {
+    nonisolated(unsafe) let boxed = value
+    continuation.yield(boxed)
+}
+#endif
+
 // ---- Types -----------------------------------------------------------------
 
 struct GetGreetingParams: Sendable {
@@ -115,7 +126,7 @@ class BridgekitDemoFeatureContract: BridgeContractDefinition<any BridgekitDemoFe
 #endif
 
 #if swift(>=6.0)
-nonisolated private class BridgekitDemoFeatureInboundAdapter: InboundContractAdapter {
+nonisolated private final class BridgekitDemoFeatureInboundAdapter: InboundContractAdapter, @unchecked Sendable {
     let impl: any BridgekitDemoFeature
     nonisolated init(impl: any BridgekitDemoFeature) { self.impl = impl }
 
@@ -177,7 +188,7 @@ private class BridgekitDemoFeatureInboundAdapter: InboundContractAdapter {
 #endif
 
 #if swift(>=6.0)
-nonisolated private class BridgekitDemoFeatureOutboundClient: BridgekitDemoFeatureClient {
+nonisolated private final class BridgekitDemoFeatureOutboundClient: BridgekitDemoFeatureClient, @unchecked Sendable {
     let caller: OutboundCaller
     nonisolated init(caller: OutboundCaller) { self.caller = caller }
     func getGreeting(_ params: GetGreetingParams) async throws -> String {

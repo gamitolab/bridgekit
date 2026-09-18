@@ -4,6 +4,17 @@
 
 import BridgeKit
 
+#if swift(>=6.0)
+nonisolated private func bridgeKitYieldSending<T>(_ continuation: AsyncStream<T>.Continuation, _ value: T) {
+    nonisolated(unsafe) let boxed = value
+    continuation.yield(boxed)
+}
+nonisolated private func bridgeKitYieldThrowingSending<T>(_ continuation: AsyncThrowingStream<T, Error>.Continuation, _ value: T) {
+    nonisolated(unsafe) let boxed = value
+    continuation.yield(boxed)
+}
+#endif
+
 // ---- Types -----------------------------------------------------------------
 
 struct GreetParams: Sendable {
@@ -127,7 +138,7 @@ class BridgekitLocalhostContract: BridgeContractDefinition<any BridgekitLocalhos
 #endif
 
 #if swift(>=6.0)
-nonisolated private class BridgekitLocalhostInboundAdapter: InboundContractAdapter {
+nonisolated private final class BridgekitLocalhostInboundAdapter: InboundContractAdapter, @unchecked Sendable {
     let impl: any BridgekitLocalhost
     nonisolated init(impl: any BridgekitLocalhost) { self.impl = impl }
 
@@ -158,9 +169,19 @@ nonisolated private class BridgekitLocalhostInboundAdapter: InboundContractAdapt
         }
     }
 
-    func stateStreams() -> [String: AsyncStream<Any?>] { return [
-        "mood": AsyncStream<Any?> { cont in Task { for await v in self.impl.mood { cont.yield(v) }; cont.finish() } }
-    ] }
+    func stateStreams() -> [String: AsyncStream<Any?>] {
+        let (bkMoodStream, bkMoodCont) = AsyncStream<Any?>.makeStream()
+        let bkMoodPump = Task {
+            for await v in self.impl.mood {
+                bridgeKitYieldSending(bkMoodCont, v)
+            }
+            bkMoodCont.finish()
+        }
+        bkMoodCont.onTermination = { _ in bkMoodPump.cancel() }
+        return [
+            "mood": bkMoodStream
+        ]
+    }
 }
 #else
 private class BridgekitLocalhostInboundAdapter: InboundContractAdapter {
@@ -201,7 +222,7 @@ private class BridgekitLocalhostInboundAdapter: InboundContractAdapter {
 #endif
 
 #if swift(>=6.0)
-nonisolated private class BridgekitLocalhostOutboundClient: BridgekitLocalhostClient {
+nonisolated private final class BridgekitLocalhostOutboundClient: BridgekitLocalhostClient, @unchecked Sendable {
     let caller: OutboundCaller
     nonisolated init(caller: OutboundCaller) { self.caller = caller }
     func getMotto() throws -> String {
@@ -213,19 +234,18 @@ nonisolated private class BridgekitLocalhostOutboundClient: BridgekitLocalhostCl
         return try ((result as? String) ?? bridgeKitThrow(path: "result", expectedType: "String", actualValue: result))
     }
     var mood: AsyncStream<BridgeValue<String>> {
-        let source = caller.state(member: "mood")
-        return AsyncStream { cont in
-            let pump = Task {
-                for await bv in source {
-                    cont.yield(bv.remap { (value: Any?) -> String? in
+        let (stream, continuation) = AsyncStream<BridgeValue<String>>.makeStream()
+        let pump = Task {
+            for await bv in self.caller.state(member: "mood") {
+                bridgeKitYieldSending(continuation, bv.remap { (value: Any?) -> String? in
                         do { return try ((value as? String) ?? bridgeKitThrow(path: "mood.value", expectedType: "String", actualValue: value)) }
                         catch { bridgeKitReportDecodeError(error, context: "state.mood"); return nil }
                     })
-                }
-                cont.finish()
             }
-            cont.onTermination = { _ in pump.cancel() }
+            continuation.finish()
         }
+        continuation.onTermination = { _ in pump.cancel() }
+        return stream
     }
 }
 #else
