@@ -12,6 +12,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- `BridgeKitNative` assigns `NotReadyDelegate.shared` in `init` instead of as
+  a stored default, so vendoring core sources into a
+  `SWIFT_DEFAULT_ACTOR_ISOLATION=MainActor` target does not fail with
+  "main actor-isolated default value in a nonisolated(unsafe) context".
 - `BKTransport.h` wraps C function declarations in `extern "C"` so Swift
   `SWIFT_OBJC_INTEROP_MODE=objcxx` does not C++-mangle `BKTransportInvoke`.
   The `BKTransportHooks` `@interface` stays outside that block.

@@ -4,6 +4,17 @@
 
 import BridgeKit
 
+#if swift(>=6.0)
+nonisolated private func bridgeKitYieldSending<T>(_ continuation: AsyncStream<T>.Continuation, _ value: T) {
+    nonisolated(unsafe) let boxed = value
+    continuation.yield(boxed)
+}
+nonisolated private func bridgeKitYieldThrowingSending<T>(_ continuation: AsyncThrowingStream<T, Error>.Continuation, _ value: T) {
+    nonisolated(unsafe) let boxed = value
+    continuation.yield(boxed)
+}
+#endif
+
 // ---- Types -----------------------------------------------------------------
 
 struct GetUserLevelResult: Sendable {
@@ -138,7 +149,7 @@ class BridgekitDemoJsinfoContract: BridgeContractDefinition<any BridgekitDemoJsi
 #endif
 
 #if swift(>=6.0)
-nonisolated private class BridgekitDemoJsinfoInboundAdapter: InboundContractAdapter {
+nonisolated private final class BridgekitDemoJsinfoInboundAdapter: InboundContractAdapter, @unchecked Sendable {
     let impl: any BridgekitDemoJsinfo
     nonisolated init(impl: any BridgekitDemoJsinfo) { self.impl = impl }
 
@@ -165,8 +176,15 @@ nonisolated private class BridgekitDemoJsinfoInboundAdapter: InboundContractAdap
     func openStream(member: String, payload: [String: Any?]?) -> AsyncThrowingStream<Any?, Error> {
         switch member {
         case "clockTicks":
-            let src = impl.clockTicks()
-            return AsyncThrowingStream { cont in Task { for await item in src { cont.yield(item) }; cont.finish() } }
+            let (stream, continuation) = AsyncThrowingStream<Any?, Error>.makeStream()
+            let pump = Task {
+                for await item in self.impl.clockTicks() {
+                    bridgeKitYieldThrowingSending(continuation, item)
+                }
+                continuation.finish()
+            }
+            continuation.onTermination = { _ in pump.cancel() }
+            return stream
         default: return AsyncThrowingStream { $0.finish() }
         }
     }
@@ -212,7 +230,7 @@ private class BridgekitDemoJsinfoInboundAdapter: InboundContractAdapter {
 #endif
 
 #if swift(>=6.0)
-nonisolated private class BridgekitDemoJsinfoOutboundClient: BridgekitDemoJsinfoClient {
+nonisolated private final class BridgekitDemoJsinfoOutboundClient: BridgekitDemoJsinfoClient, @unchecked Sendable {
     let caller: OutboundCaller
     nonisolated init(caller: OutboundCaller) { self.caller = caller }
     func getReactNativeVersion() async throws -> String {
@@ -228,8 +246,20 @@ nonisolated private class BridgekitDemoJsinfoOutboundClient: BridgekitDemoJsinfo
         return try ((result as? [Any?]) ?? bridgeKitThrow(path: "result", expectedType: "Array", actualValue: result)).enumerated().map { index, item in try ((item as? String) ?? bridgeKitThrow(path: ("result") + "[\(index)]", expectedType: "String", actualValue: item)) }
     }
     func clockTicks() -> AsyncStream<Double> {
-        let throwing = caller.stream(member: "clockTicks", payload: nil)
-        return AsyncStream { cont in Task { do { for try await item in throwing { cont.yield(try ((item as? Double) ?? Double(try ((item as? Int) ?? bridgeKitThrow(path: "clockTicks.value", expectedType: "Double", actualValue: item))))) } } catch { bridgeKitReportDecodeError(error, context: "stream.clockTicks"); cont.finish() } } }
+        let (stream, continuation) = AsyncStream<Double>.makeStream()
+        let pump = Task {
+            do {
+                for try await item in self.caller.stream(member: "clockTicks", payload: nil) {
+                    bridgeKitYieldSending(continuation, try ((item as? Double) ?? Double(try ((item as? Int) ?? bridgeKitThrow(path: "clockTicks.value", expectedType: "Double", actualValue: item)))))
+                }
+                continuation.finish()
+            } catch {
+                bridgeKitReportDecodeError(error, context: "stream.clockTicks")
+                continuation.finish()
+            }
+        }
+        continuation.onTermination = { _ in pump.cancel() }
+        return stream
     }
 }
 #else

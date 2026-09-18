@@ -12,6 +12,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- The Swift 6 compile gate now uses `swiftc -c -wmo` (region isolation is
+  SIL-only; `-typecheck` was a false negative). Generated Swift 6 adapters
+  pump State/streams with `AsyncStream.makeStream()` plus an
+  `@unchecked Sendable` adapter; host protocols are not `Sendable`. Swift 5
+  output is unchanged.
+
 ## [0.3.0-alpha.3] - 2026-09-18
 
 ### Fixed

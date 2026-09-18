@@ -91,6 +91,12 @@ function simulatorSdkPath(): string {
   return result.stdout.trim();
 }
 
+// Swift 5 / default-language typecheck. Structurally blind to #RegionIsolation
+// (SIL/codegen only). Keep these sites as typecheck: they prove syntax and
+// API-shape errors. Swift 6 region isolation is gated by
+// swiftcCompileSwift6MainActor via expectSwift5AndSwift6MainActor.
+// Other call sites (CLI-01/03/04, known-bad) do not need -c -wmo unless they
+// grow State/stream pumps; known-good and N0c already go through the Swift 6 compile gate.
 function swiftcTypecheck(filePath: string) {
   return spawnSync(
     '/usr/bin/swiftc',
@@ -110,19 +116,26 @@ function swiftcTypecheck(filePath: string) {
   );
 }
 
-function swiftcTypecheckSwift6MainActor(filePath: string) {
+function swiftcCompileSwift6MainActor(filePath: string) {
+  // Region-isolation diagnostics (#RegionIsolation) are SIL/codegen-only.
+  // `-typecheck` is a false negative for the Swift 6 MainActor gate.
+  const objectPath = filePath.replace(/\.swift$/, '.o');
   return spawnSync(
     '/usr/bin/swiftc',
     [
-      '-typecheck',
+      '-c',
+      '-wmo',
       '-swift-version',
       '6',
+      '-strict-concurrency=complete',
       '-default-isolation=MainActor',
       filePath,
       '-sdk',
       simulatorSdkPath(),
       '-target',
       'arm64-apple-ios15.0-simulator',
+      '-o',
+      objectPath,
     ],
     { cwd: repoRoot, encoding: 'utf8' },
   );
@@ -140,10 +153,10 @@ function expectSwift5AndSwift6MainActor(generatedPath: string): void {
   const workspace = makeWorkspace('swift6-mainactor');
   const combined = path.join(workspace, 'GeneratedWithStubs.swift');
   writeGeneratedWithRuntimeStubs(generatedPath, combined);
-  const swift6 = swiftcTypecheckSwift6MainActor(combined);
+  const swift6 = swiftcCompileSwift6MainActor(combined);
   if (swift6.status !== 0) {
     throw new Error(
-      `Swift 6 + MainActor typecheck failed (${swift6.status}):\n${swift6.stdout}\n${swift6.stderr}`,
+      `Swift 6 + MainActor compile failed (${swift6.status}):\n${swift6.stdout}\n${swift6.stderr}`,
     );
   }
   expect(swift6.status).toBe(0);

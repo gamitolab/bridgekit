@@ -76,6 +76,37 @@ function pushCompleteTypePair(
   lines.push('#endif');
 }
 
+/**
+ * Swift 6 `AsyncStream` / `AsyncThrowingStream` builders take a `sending` closure,
+ * and `Continuation.yield` takes a `sending` element. Generated pumps therefore
+ * cannot capture a non-Sendable host `impl` / `BridgeValue<Any?>` source, and
+ * cannot yield wire `Any?` values, without a local transfer.
+ *
+ * Host protocols stay `AnyObject` (not Sendable). The generated adapter/client is
+ * `@unchecked Sendable` because the engine already hops Nitro threads; that is
+ * the existing runtime contract, not a new requirement on host implementers.
+ * `nonisolated(unsafe)` here only launders the yield, matching that same hop.
+ */
+function swift6YieldHelpers(): string[] {
+  return [
+    '#if swift(>=6.0)',
+    'nonisolated private func bridgeKitYieldSending<T>(_ continuation: AsyncStream<T>.Continuation, _ value: T) {',
+    '    nonisolated(unsafe) let boxed = value',
+    '    continuation.yield(boxed)',
+    '}',
+    'nonisolated private func bridgeKitYieldThrowingSending<T>(_ continuation: AsyncThrowingStream<T, Error>.Continuation, _ value: T) {',
+    '    nonisolated(unsafe) let boxed = value',
+    '    continuation.yield(boxed)',
+    '}',
+    '#endif',
+    '',
+  ];
+}
+
+function swiftPumpStem(memberName: string): string {
+  return `bk${toPascalCase(memberName)}`;
+}
+
 /** Unwrap optional/nullable to the first structured/primitive inner node. */
 function unwrapWrappers(node: SchemaNode): SchemaNode {
   let inner = node;
@@ -155,9 +186,12 @@ export function assembleSwiftContractFile(parts: {
   inboundImpls: string[];
   syncImpls: string[];
   streamImpls: string[];
+  streamImplsSwift6: string[];
   outboundImpls: string[];
+  outboundImplsSwift6: string[];
   stateInitials: string[];
   stateFlowEntries: string[];
+  stateStreamsSwift6: string[];
   needsFoundationImport: boolean;
   needsBridgeKitDecodeError: boolean;
   moduleName: string;
@@ -176,9 +210,12 @@ export function assembleSwiftContractFile(parts: {
     inboundImpls,
     syncImpls,
     streamImpls,
+    streamImplsSwift6,
     outboundImpls,
+    outboundImplsSwift6,
     stateInitials,
     stateFlowEntries,
+    stateStreamsSwift6,
     needsFoundationImport,
     needsBridgeKitDecodeError,
     moduleName,
@@ -200,6 +237,9 @@ export function assembleSwiftContractFile(parts: {
     // No additional import needed — BridgeKitDecodeError is in BridgeKit.
   }
   lines.push('');
+  for (const helperLine of swift6YieldHelpers()) {
+    lines.push(helperLine);
+  }
 
   // Type declarations (structs, enums)
   if (typeDecls.length > 0) {
@@ -307,94 +347,100 @@ export function assembleSwiftContractFile(parts: {
   lines.push('');
 
   // Inbound adapter class
-  const inboundInner: string[] = [];
-  inboundInner.push(`    let impl: any ${className}`);
-  inboundInner.push(`    init(impl: any ${className}) { self.impl = impl }`);
-  inboundInner.push('');
-  if (stateInitials.length === 0) {
-    inboundInner.push(`    var stateInitials: [String: Any?] { return [:] }`);
-  } else {
-    inboundInner.push(`    var stateInitials: [String: Any?] { return [`);
-    for (const entry of stateInitials) inboundInner.push(`        ${entry}`);
-    inboundInner.push(`    ] }`);
-  }
-  inboundInner.push('');
-  inboundInner.push(
-    `    func invoke(member: String, payload: [String: Any?]?) async throws -> Any? {`,
-  );
-  inboundInner.push(`        switch member {`);
-  for (const impl of inboundImpls) {
-    for (const l of impl.split('\n')) inboundInner.push(`        ${l}`);
-  }
-  inboundInner.push(
-    `        default: throw BridgeKitDecodeError(field: "member", expectedType: member)`,
-  );
-  inboundInner.push(`        }`);
-  inboundInner.push(`    }`);
-  inboundInner.push('');
-  inboundInner.push(
-    `    func invokeSync(member: String, payload: [String: Any?]?) throws -> Any? {`,
-  );
-  inboundInner.push(`        switch member {`);
-  for (const impl of syncImpls) {
-    for (const l of impl.split('\n')) inboundInner.push(`        ${l}`);
-  }
-  inboundInner.push(
-    `        default: throw BridgeKitDecodeError(field: "member", expectedType: member)`,
-  );
-  inboundInner.push(`        }`);
-  inboundInner.push(`    }`);
-  inboundInner.push('');
-  inboundInner.push(
-    `    func openStream(member: String, payload: [String: Any?]?) -> AsyncThrowingStream<Any?, Error> {`,
-  );
-  inboundInner.push(`        switch member {`);
-  for (const impl of streamImpls) {
-    for (const l of impl.split('\n')) inboundInner.push(`        ${l}`);
-  }
-  inboundInner.push(`        default: return AsyncThrowingStream { $0.finish() }`);
-  inboundInner.push(`        }`);
-  inboundInner.push(`    }`);
-  inboundInner.push('');
-  if (stateFlowEntries.length === 0) {
-    inboundInner.push(`    func stateStreams() -> [String: AsyncStream<Any?>] { return [:] }`);
-  } else {
-    inboundInner.push(`    func stateStreams() -> [String: AsyncStream<Any?>] { return [`);
-    for (let i = 0; i < stateFlowEntries.length; i++) {
-      const comma = i < stateFlowEntries.length - 1 ? ',' : '';
-      inboundInner.push(`        ${stateFlowEntries[i]}${comma}`);
+  const buildInboundInner = (swift6: boolean): string[] => {
+    const inner: string[] = [];
+    inner.push(`    let impl: any ${className}`);
+    inner.push(
+      swift6
+        ? `    nonisolated init(impl: any ${className}) { self.impl = impl }`
+        : `    init(impl: any ${className}) { self.impl = impl }`,
+    );
+    inner.push('');
+    if (stateInitials.length === 0) {
+      inner.push(`    var stateInitials: [String: Any?] { return [:] }`);
+    } else {
+      inner.push(`    var stateInitials: [String: Any?] { return [`);
+      for (const entry of stateInitials) inner.push(`        ${entry}`);
+      inner.push(`    ] }`);
     }
-    inboundInner.push(`    ] }`);
-  }
-  const inboundInnerSwift6 = inboundInner.map((l) =>
-    l.startsWith('    init(impl:') ? `    nonisolated ${l.trimStart()}` : l,
-  );
+    inner.push('');
+    inner.push(`    func invoke(member: String, payload: [String: Any?]?) async throws -> Any? {`);
+    inner.push(`        switch member {`);
+    for (const impl of inboundImpls) {
+      for (const l of impl.split('\n')) inner.push(`        ${l}`);
+    }
+    inner.push(
+      `        default: throw BridgeKitDecodeError(field: "member", expectedType: member)`,
+    );
+    inner.push(`        }`);
+    inner.push(`    }`);
+    inner.push('');
+    inner.push(`    func invokeSync(member: String, payload: [String: Any?]?) throws -> Any? {`);
+    inner.push(`        switch member {`);
+    for (const impl of syncImpls) {
+      for (const l of impl.split('\n')) inner.push(`        ${l}`);
+    }
+    inner.push(
+      `        default: throw BridgeKitDecodeError(field: "member", expectedType: member)`,
+    );
+    inner.push(`        }`);
+    inner.push(`    }`);
+    inner.push('');
+    inner.push(
+      `    func openStream(member: String, payload: [String: Any?]?) -> AsyncThrowingStream<Any?, Error> {`,
+    );
+    inner.push(`        switch member {`);
+    const streamCases = swift6 ? streamImplsSwift6 : streamImpls;
+    for (const impl of streamCases) {
+      for (const l of impl.split('\n')) inner.push(`        ${l}`);
+    }
+    inner.push(`        default: return AsyncThrowingStream { $0.finish() }`);
+    inner.push(`        }`);
+    inner.push(`    }`);
+    inner.push('');
+    if (stateFlowEntries.length === 0) {
+      inner.push(`    func stateStreams() -> [String: AsyncStream<Any?>] { return [:] }`);
+    } else if (swift6) {
+      for (const l of stateStreamsSwift6) inner.push(l);
+    } else {
+      inner.push(`    func stateStreams() -> [String: AsyncStream<Any?>] { return [`);
+      for (let i = 0; i < stateFlowEntries.length; i++) {
+        const comma = i < stateFlowEntries.length - 1 ? ',' : '';
+        inner.push(`        ${stateFlowEntries[i]}${comma}`);
+      }
+      inner.push(`    ] }`);
+    }
+    return inner;
+  };
   pushCompleteTypePair(
     lines,
-    `nonisolated private class ${className}InboundAdapter: InboundContractAdapter {`,
+    `nonisolated private final class ${className}InboundAdapter: InboundContractAdapter, @unchecked Sendable {`,
     `private class ${className}InboundAdapter: InboundContractAdapter {`,
-    inboundInner,
-    inboundInnerSwift6,
+    buildInboundInner(false),
+    buildInboundInner(true),
   );
   lines.push('');
 
   // Outbound client class
-  const outboundInner: string[] = [
-    `    let caller: OutboundCaller`,
-    `    init(caller: OutboundCaller) { self.caller = caller }`,
-  ];
-  for (const impl of outboundImpls) {
-    for (const l of impl.split('\n')) outboundInner.push(`    ${l}`);
-  }
-  const outboundInnerSwift6 = outboundInner.map((l) =>
-    l.startsWith('    init(caller:') ? `    nonisolated ${l.trimStart()}` : l,
-  );
+  const buildOutboundInner = (swift6: boolean): string[] => {
+    const inner: string[] = [
+      `    let caller: OutboundCaller`,
+      swift6
+        ? `    nonisolated init(caller: OutboundCaller) { self.caller = caller }`
+        : `    init(caller: OutboundCaller) { self.caller = caller }`,
+    ];
+    const impls = swift6 ? outboundImplsSwift6 : outboundImpls;
+    for (const impl of impls) {
+      for (const l of impl.split('\n')) inner.push(`    ${l}`);
+    }
+    return inner;
+  };
   pushCompleteTypePair(
     lines,
-    `nonisolated private class ${className}OutboundClient: ${className}Client {`,
+    `nonisolated private final class ${className}OutboundClient: ${className}Client, @unchecked Sendable {`,
     `private class ${className}OutboundClient: ${className}Client {`,
-    outboundInner,
-    outboundInnerSwift6,
+    buildOutboundInner(false),
+    buildOutboundInner(true),
   );
 
   return {
@@ -424,11 +470,15 @@ export function emitSwiftContract(
   const inboundImpls: string[] = [];
   const syncImpls: string[] = [];
   const streamImpls: string[] = [];
+  const streamImplsSwift6: string[] = [];
   const outboundImpls: string[] = [];
+  const outboundImplsSwift6: string[] = [];
   const memberHashPairs: string[] = [];
   const encodeDecodeFns: string[] = [];
   const stateInitials: string[] = [];
   const stateFlowEntries: string[] = [];
+  const stateStreamsSwift6Setup: string[] = [];
+  const stateStreamsSwift6Returns: string[] = [];
 
   const registeredCodecs = new Set<string>();
   const registerCodecFn = (fn: string): void => {
@@ -440,6 +490,11 @@ export function emitSwiftContract(
     encodeDecodeFns.push(fn);
   };
   const walker = new SwiftCodecWalker(typeEmitter, className, registerCodecFn, registeredCodecs);
+
+  const pushOutboundBoth = (impl: string): void => {
+    outboundImpls.push(impl);
+    outboundImplsSwift6.push(impl);
+  };
 
   const registerObjectCodec = (dataClassName: string, objNode: ObjectNode): void => {
     if (encodeDecodeFns.some((fn) => fn.includes(`encode${dataClassName}(`))) return;
@@ -488,7 +543,7 @@ export function emitSwiftContract(
 
       // outbound
       if (paramsType) {
-        outboundImpls.push(
+        pushOutboundBoth(
           [
             `func ${swiftName}(_ params: ${paramsType}) {`,
             `    caller.fire(member: ${swiftStringLiteral(memberName)}, payload: ${className}Codecs.encode${paramsType}(params))`,
@@ -496,7 +551,7 @@ export function emitSwiftContract(
           ].join('\n'),
         );
       } else {
-        outboundImpls.push(
+        pushOutboundBoth(
           `func ${swiftName}() { caller.fire(member: ${swiftStringLiteral(memberName)}, payload: nil) }`,
         );
       }
@@ -574,7 +629,7 @@ export function emitSwiftContract(
       );
 
       if (desc.kind === 'querySync') {
-        outboundImpls.push(
+        pushOutboundBoth(
           [
             `func ${swiftName}(${paramSig}) throws -> ${resultType} {`,
             `    let result = try caller.${invokeCall}(member: ${swiftStringLiteral(memberName)}, payload: ${encodeParams})`,
@@ -583,7 +638,7 @@ export function emitSwiftContract(
           ].join('\n'),
         );
       } else {
-        outboundImpls.push(
+        pushOutboundBoth(
           [
             `func ${swiftName}(${paramSig}) async throws -> ${resultType} {`,
             `    let result = try await caller.${invokeCall}(member: ${swiftStringLiteral(memberName)}, payload: ${encodeParams})`,
@@ -640,30 +695,64 @@ export function emitSwiftContract(
         `}`,
       ].join('\n'),
     );
+    outboundImplsSwift6.push(
+      [
+        `func ${swiftName}(${paramSig}) -> ${streamType} {`,
+        `    let (stream, continuation) = AsyncStream<${valueResult.typeName}>.makeStream()`,
+        `    let pump = Task {`,
+        `        do {`,
+        `            for try await item in self.caller.stream(member: ${swiftStringLiteral(memberName)}, payload: ${encodeStreamParams}) {`,
+        `                bridgeKitYieldSending(continuation, ${decodeStreamItem})`,
+        `            }`,
+        `            continuation.finish()`,
+        `        } catch {`,
+        `            bridgeKitReportDecodeError(error, context: ${swiftStringLiteral(`stream.${memberName}`)})`,
+        `            continuation.finish()`,
+        `        }`,
+        `    }`,
+        `    continuation.onTermination = { _ in pump.cancel() }`,
+        `    return stream`,
+        `}`,
+      ].join('\n'),
+    );
 
     // inbound openStream: provider returns AsyncStream<T>, protocol requires AsyncThrowingStream<Any?, Error>.
     // Bridge by wrapping the provider's AsyncStream in a non-throwing stream yielded into the throwing one.
+    const decodeParamsExpr = streamParamsType
+      ? `${className}Codecs.decode${streamParamsType}(payload ?? [:])`
+      : '';
     const callExpr = streamParamsType
-      ? `impl.${swiftName}(${className}Codecs.decode${streamParamsType}(payload ?? [:]))`
+      ? `impl.${swiftName}(${decodeParamsExpr})`
       : `impl.${swiftName}()`;
-    if (schemaNeedsCodec(desc.value)) {
-      const encodeItem = walker.encodeExpr('item', desc.value, valueCtx);
-      streamImpls.push(
-        [
-          `case ${swiftStringLiteral(memberName)}:`,
-          `    let src = ${callExpr}`,
-          `    return AsyncThrowingStream { cont in Task { for await item in src { cont.yield(${encodeItem}) }; cont.finish() } }`,
-        ].join('\n'),
-      );
-    } else {
-      streamImpls.push(
-        [
-          `case ${swiftStringLiteral(memberName)}:`,
-          `    let src = ${callExpr}`,
-          `    return AsyncThrowingStream { cont in Task { for await item in src { cont.yield(item) }; cont.finish() } }`,
-        ].join('\n'),
-      );
+    const swift6CallExpr = streamParamsType
+      ? `self.impl.${swiftName}(decoded)`
+      : `self.impl.${swiftName}()`;
+    const encodeItem = schemaNeedsCodec(desc.value)
+      ? walker.encodeExpr('item', desc.value, valueCtx)
+      : 'item';
+    streamImpls.push(
+      [
+        `case ${swiftStringLiteral(memberName)}:`,
+        `    let src = ${callExpr}`,
+        `    return AsyncThrowingStream { cont in Task { for await item in src { cont.yield(${encodeItem}) }; cont.finish() } }`,
+      ].join('\n'),
+    );
+    const swift6StreamCase: string[] = [`case ${swiftStringLiteral(memberName)}:`];
+    if (streamParamsType) {
+      swift6StreamCase.push(`    let decoded = ${decodeParamsExpr}`);
     }
+    swift6StreamCase.push(
+      `    let (stream, continuation) = AsyncThrowingStream<Any?, Error>.makeStream()`,
+      `    let pump = Task {`,
+      `        for await item in ${swift6CallExpr} {`,
+      `            bridgeKitYieldThrowingSending(continuation, ${encodeItem})`,
+      `        }`,
+      `        continuation.finish()`,
+      `    }`,
+      `    continuation.onTermination = { _ in pump.cancel() }`,
+      `    return stream`,
+    );
+    streamImplsSwift6.push(swift6StreamCase.join('\n'));
   }
 
   // ---- state ----
@@ -688,16 +777,24 @@ export function emitSwiftContract(
 
     // stateFlowEntries are emitted inside the INBOUND adapter (no `caller`).
     // Bridge the provider's AsyncStream<T> to AsyncStream<Any?> via a wrapping stream.
-    if (schemaNeedsCodec(desc.value)) {
-      const encodeStateValue = walker.encodeExpr('v', desc.value, memberCtx);
-      stateFlowEntries.push(
-        `${swiftStringLiteral(memberName)}: AsyncStream<Any?> { cont in Task { for await v in self.impl.${swiftName} { cont.yield(${encodeStateValue}) }; cont.finish() } }`,
-      );
-    } else {
-      stateFlowEntries.push(
-        `${swiftStringLiteral(memberName)}: AsyncStream<Any?> { cont in Task { for await v in self.impl.${swiftName} { cont.yield(v) }; cont.finish() } }`,
-      );
-    }
+    const encodeStateValue = schemaNeedsCodec(desc.value)
+      ? walker.encodeExpr('v', desc.value, memberCtx)
+      : 'v';
+    stateFlowEntries.push(
+      `${swiftStringLiteral(memberName)}: AsyncStream<Any?> { cont in Task { for await v in self.impl.${swiftName} { cont.yield(${encodeStateValue}) }; cont.finish() } }`,
+    );
+    const stem = swiftPumpStem(memberName);
+    stateStreamsSwift6Setup.push(
+      `let (${stem}Stream, ${stem}Cont) = AsyncStream<Any?>.makeStream()`,
+      `let ${stem}Pump = Task {`,
+      `    for await v in self.impl.${swiftName} {`,
+      `        bridgeKitYieldSending(${stem}Cont, ${encodeStateValue})`,
+      `    }`,
+      `    ${stem}Cont.finish()`,
+      `}`,
+      `${stem}Cont.onTermination = { _ in ${stem}Pump.cancel() }`,
+    );
+    stateStreamsSwift6Returns.push(`${swiftStringLiteral(memberName)}: ${stem}Stream`);
 
     // caller.state() yields AsyncStream<BridgeValue<Any?>>. AsyncStream is an
     // invariant generic struct, so `as! AsyncStream<BridgeValue<T>>` traps at
@@ -709,6 +806,12 @@ export function emitSwiftContract(
       memberCtx,
       `${swiftName}.value`,
     );
+    const remapYield = [
+      `bv.remap { (value: Any?) -> ${valueResult.typeName}? in`,
+      `                    do { return ${decodeStateValue} }`,
+      `                    catch { bridgeKitReportDecodeError(error, context: ${swiftStringLiteral(`state.${memberName}`)}); return nil }`,
+      `                }`,
+    ].join('\n');
     outboundImpls.push(
       [
         `var ${swiftName}: AsyncStream<BridgeValue<${valueResult.typeName}>> {`,
@@ -716,10 +819,7 @@ export function emitSwiftContract(
         `    return AsyncStream { cont in`,
         `        let pump = Task {`,
         `            for await bv in source {`,
-        `                cont.yield(bv.remap { (value: Any?) -> ${valueResult.typeName}? in`,
-        `                    do { return ${decodeStateValue} }`,
-        `                    catch { bridgeKitReportDecodeError(error, context: ${swiftStringLiteral(`state.${memberName}`)}); return nil }`,
-        `                })`,
+        `                cont.yield(${remapYield})`,
         `            }`,
         `            cont.finish()`,
         `        }`,
@@ -728,6 +828,36 @@ export function emitSwiftContract(
         `}`,
       ].join('\n'),
     );
+    outboundImplsSwift6.push(
+      [
+        `var ${swiftName}: AsyncStream<BridgeValue<${valueResult.typeName}>> {`,
+        `    let (stream, continuation) = AsyncStream<BridgeValue<${valueResult.typeName}>>.makeStream()`,
+        `    let pump = Task {`,
+        `        for await bv in self.caller.state(member: ${swiftStringLiteral(memberName)}) {`,
+        `            bridgeKitYieldSending(continuation, ${remapYield})`,
+        `        }`,
+        `        continuation.finish()`,
+        `    }`,
+        `    continuation.onTermination = { _ in pump.cancel() }`,
+        `    return stream`,
+        `}`,
+      ].join('\n'),
+    );
+  }
+
+  const stateStreamsSwift6: string[] = [];
+  if (stateFlowEntries.length > 0) {
+    stateStreamsSwift6.push(`    func stateStreams() -> [String: AsyncStream<Any?>] {`);
+    for (const l of stateStreamsSwift6Setup) {
+      stateStreamsSwift6.push(`        ${l}`);
+    }
+    stateStreamsSwift6.push(`        return [`);
+    for (let i = 0; i < stateStreamsSwift6Returns.length; i++) {
+      const comma = i < stateStreamsSwift6Returns.length - 1 ? ',' : '';
+      stateStreamsSwift6.push(`            ${stateStreamsSwift6Returns[i]}${comma}`);
+    }
+    stateStreamsSwift6.push(`        ]`);
+    stateStreamsSwift6.push(`    }`);
   }
 
   const needsFoundationImport =
@@ -764,9 +894,12 @@ export function emitSwiftContract(
     inboundImpls,
     syncImpls,
     streamImpls,
+    streamImplsSwift6,
     outboundImpls,
+    outboundImplsSwift6,
     stateInitials,
     stateFlowEntries,
+    stateStreamsSwift6,
     needsFoundationImport,
     needsBridgeKitDecodeError,
     moduleName,
