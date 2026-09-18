@@ -41,10 +41,16 @@ final class BridgeKitNative {
     static let shared = BridgeKitNative()
 
     // nonisolated(unsafe): set once before Nitro host creation; NSLock guards the window.
+    // Assigned in `init` rather than as a default value so a MainActor-default
+    // target (SWIFT_DEFAULT_ACTOR_ISOLATION=MainActor) does not treat
+    // `NotReadyDelegate.shared` as a main-actor-isolated default in a
+    // nonisolated(unsafe) context.
     private let _lock = NSLock()
-    nonisolated(unsafe) private var _delegate: BridgeKitNativeDelegate = NotReadyDelegate.shared
+    nonisolated(unsafe) private var _delegate: BridgeKitNativeDelegate
 
-    private init() {}
+    private init() {
+        _delegate = NotReadyDelegate.shared
+    }
 
     /// Get/set the active delegate.
     ///
