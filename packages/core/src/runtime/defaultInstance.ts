@@ -9,7 +9,7 @@ import { LoopbackTransport } from './loopbackTransport';
 
 const REGISTRY_SYMBOL = Symbol.for('com.bridgekit.registry');
 // Must match the version in packages/core/package.json.
-const PACKAGE_VERSION = '0.3.0-alpha.2';
+const PACKAGE_VERSION = '0.3.0-alpha.4';
 
 interface GlobalRegistry {
   instance: BridgeKitJs;

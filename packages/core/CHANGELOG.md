@@ -26,6 +26,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `BridgeKitNitro` disables `SWIFT_VERIFY_EMITTED_MODULE_INTERFACE` so Xcode 27
   does not rebuild the C++ umbrella while verifying the Swift module.
 
+## [0.3.0-alpha.4] - 2026-09-22
+
+### Added
+
+- Remote hosts can add `https://github.com/gamitolab/bridgekit.git` at exact tag `0.3.0-alpha.4` and depend on product `BridgeKit` from package `bridgekit`. No local path.
+
 ## [0.3.0-alpha.2] - 2026-09-17
 
 ### Changed

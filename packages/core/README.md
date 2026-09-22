@@ -51,7 +51,14 @@ so `BKTransport*` stay unbound until the host image loads.
 1. `pnpm add @gamitolab/bridgekit@alpha react-native-nitro-modules`
 2. Generate host contracts: `bridgekit generate --platform swift --out-dir ios/HostApp/Generated`
 3. Package RN: `pnpm package:ios` (set `BRIDGEKIT_HOST_PROVIDES_RUNTIME=1` in the RN Podfile)
-4. In the **host** Xcode project: Add Package (`packages/core` → product `BridgeKit`), then:
+4. In the **host** Xcode project, add the remote package. No local path. URL `https://github.com/gamitolab/bridgekit.git`, exact tag `0.3.0-alpha.4`, product `BridgeKit`, package `bridgekit`:
+
+```swift
+.package(url: "https://github.com/gamitolab/bridgekit.git", exact: "0.3.0-alpha.4")
+.product(name: "BridgeKit", package: "bridgekit")
+```
+
+Then:
 
 ```swift
 import BridgeKit

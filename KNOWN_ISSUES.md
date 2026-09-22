@@ -12,9 +12,10 @@ version, so the changelog and this file agree on what a given release contains.
 
 ### BF-IOS-01 — packaged `package:ios` still needs a host-side Swift package
 
-The public `BridgeKit` module is C++-free. Getting it into a Node-free host is
-done by adding `packages/core` as a local Swift package (see
-`apps/example-callstack-brownfield/ios/HostApp`). `@callstack/react-native-brownfield`
+The public `BridgeKit` module is C++-free. A Node-free host adds the remote
+package `https://github.com/gamitolab/bridgekit.git` at exact tag `0.3.0-alpha.4`
+and depends on product `BridgeKit` from package `bridgekit`. No local path.
+The in-repo example still uses a path package (`apps/example-callstack-brownfield/ios/HostApp`). `@callstack/react-native-brownfield`
 does not yet copy an arbitrary xcframework into `spm-artifacts/` the way it
 copies `ExpoModulesCore`. `BRIDGEKIT_HOST_PROVIDES_RUNTIME=1` keeps the public
 module out of the packaged RN framework so there is one runtime.

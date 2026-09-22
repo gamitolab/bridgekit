@@ -1,6 +1,6 @@
 {
   "name": "@gamitolab/bridgekit-cli",
-  "version": "0.3.0-alpha.3",
+  "version": "0.3.0-alpha.4",
   "description": "Code-generation CLI for BridgeKit — emits Kotlin & Swift bindings from TypeScript contracts",
   "author": "malopezr7 <malopezr7@gmail.com> (https://github.com/malopezr7)",
   "license": "MIT",

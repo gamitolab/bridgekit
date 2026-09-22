@@ -39,6 +39,7 @@ Consumers cannot install the current library. A personal npm scope is a single p
 - [x] T3 — Ignore `.env`. Route: inline. `git check-ignore -v .env` → `.gitignore:33:.env`.
 - [x] T4 — Work-unit commit `f0f571e` on `feat/gamitolab-publish`. Remaining old-scope hits are only the two historical beta-publish sentences and `odd/tasks/swift6-region-isolation.md`.
 - [x] T5 — Both packages are public. CLI `0.3.0-alpha.3` published from the tag workflow with provenance. Core `0.3.0-alpha.2` was published from the same commit after the workflow skipped publish: `ios-facade` failed with the pre-existing `BridgeKit-Swift-Cxx-Bridge.hpp` error. npm also attached `latest` to both alphas; this token got 403 deleting that tag.
+- [x] T6 — Bump both packages to `0.3.0-alpha.4` so the unpublished-version CI check passes, and add a root `Package.swift` so SPM can depend on tag `0.3.0-alpha.4` without a local path.
 
 ## Acceptance
 

@@ -18,6 +18,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `@unchecked Sendable` adapter; host protocols are not `Sendable`. Swift 5
   output is unchanged.
 
+## [0.3.0-alpha.4] - 2026-09-22
+
+### Changed
+
+- Version aligned with `@gamitolab/bridgekit` 0.3.0-alpha.4.
+
 ## [0.3.0-alpha.3] - 2026-09-18
 
 ### Changed
