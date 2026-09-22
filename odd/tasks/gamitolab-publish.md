@@ -37,8 +37,8 @@ Consumers cannot install the current library. A personal npm scope is a single p
 - [x] T1 — Confirm org, token owner, and repo transfer. Route: inline. Evidence: npm org `gamitolab` owned by `mlopezgamito`; GitHub repo `gamitolab/bridgekit`; `origin` updated; `NPM_TOKEN` Actions secret updated at `2026-09-22T11:11:30Z`. The token value is not recorded here.
 - [x] T2 — Rename live npm scope and repo URLs. Route: delegated writer. `pnpm install` exited 0. 93 files, +200/−187.
 - [x] T3 — Ignore `.env`. Route: inline. `git check-ignore -v .env` → `.gitignore:33:.env`.
-- [ ] T4 — Work-unit commit on `feat/gamitolab-publish`. Remaining old-scope hits are only the two historical beta-publish sentences and `odd/tasks/swift6-region-isolation.md`.
-- [ ] T5 — Publish `@gamitolab/bridgekit@0.3.0-alpha.2` and `@gamitolab/bridgekit-cli@0.3.0-alpha.3` on dist-tag `alpha` by pushing `core-v0.3.0-alpha.2` and `cli-v0.3.0-alpha.3`.
+- [x] T4 — Work-unit commit `f0f571e` on `feat/gamitolab-publish`. Remaining old-scope hits are only the two historical beta-publish sentences and `odd/tasks/swift6-region-isolation.md`.
+- [x] T5 — Both packages are public. CLI `0.3.0-alpha.3` published from the tag workflow with provenance. Core `0.3.0-alpha.2` was published from the same commit after the workflow skipped publish: `ios-facade` failed with the pre-existing `BridgeKit-Swift-Cxx-Bridge.hpp` error. npm also attached `latest` to both alphas; this token got 403 deleting that tag.
 
 ## Acceptance
 
