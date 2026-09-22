@@ -4,8 +4,8 @@
 
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import type { ContractDescriptor } from '@malopezr7/bridgekit/contract';
-import { memberHashes } from '@malopezr7/bridgekit/contract';
+import type { ContractDescriptor } from '@gamitolab/bridgekit/contract';
+import { memberHashes } from '@gamitolab/bridgekit/contract';
 
 import type { RawContractToken } from './load.js';
 

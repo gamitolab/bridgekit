@@ -12,7 +12,7 @@
     "generate:ios": "node ../../packages/cli/dist/index.js generate --contracts \"src/demo/contracts/*.contract.ts\" --out-dir ios/BridgeKitExample/Generated --platform swift"
   },
   "dependencies": {
-    "@malopezr7/bridgekit": "workspace:*",
+    "@gamitolab/bridgekit": "workspace:*",
     "react": "19.2.3",
     "react-native": "0.86.3",
     "react-native-nitro-modules": "0.37.1"

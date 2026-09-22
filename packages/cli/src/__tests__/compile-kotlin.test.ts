@@ -22,7 +22,7 @@ const itWithKotlinNegativeGate = process.env.BRIDGEKIT_RUN_KOTLIN_NEGATIVE === '
 function ensureBuiltCli(): void {
   if (!existsSync(cliEntry)) {
     throw new Error(
-      `CLI dist entry is missing. Run pnpm --filter @malopezr7/bridgekit-cli build before compiler harness tests: ${cliEntry}`,
+      `CLI dist entry is missing. Run pnpm --filter @gamitolab/bridgekit-cli build before compiler harness tests: ${cliEntry}`,
     );
   }
 }
@@ -177,7 +177,7 @@ private class StateCaller(private val wire: Any?) : OutboundCaller {
 function runGradleRuntimeTest(fixturesDir: string) {
   return spawnSync(
     './gradlew',
-    [':malopezr7_bridgekit:testDebugUnitTest', `-PbridgekitGeneratedRuntimeTestDir=${fixturesDir}`],
+    [':gamitolab_bridgekit:testDebugUnitTest', `-PbridgekitGeneratedRuntimeTestDir=${fixturesDir}`],
     { cwd: androidRoot, encoding: 'utf8', timeout: 15 * 60_000 },
   );
 }
@@ -186,7 +186,7 @@ describe('Kotlin real compiler harness', () => {
   it('generates a known-good fixture directory for the example app Gradle gate', () => {
     generateKotlin(
       {
-        'known-good.contract.ts': `import { defineContract, t } from '@malopezr7/bridgekit/contract';\nexport const KnownGood = defineContract('compile.kotlin-good', { methods: { greet: t.query(t.object({ name: t.string() }), t.string()) } });\n`,
+        'known-good.contract.ts': `import { defineContract, t } from '@gamitolab/bridgekit/contract';\nexport const KnownGood = defineContract('compile.kotlin-good', { methods: { greet: t.query(t.object({ name: t.string() }), t.string()) } });\n`,
       },
       goodFixturesDir,
     );

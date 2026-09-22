@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------
-// @malopezr7/bridgekit/contract — pure entry point
+// @gamitolab/bridgekit/contract — pure entry point
 //
 // ZERO side effects. No react/react-native imports.
 // Safe to import from Node (CLI codegen), Jest, and web builds.

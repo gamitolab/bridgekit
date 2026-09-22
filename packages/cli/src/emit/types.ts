@@ -1,6 +1,6 @@
 // emit/types.ts — schema node shapes, identifier helpers, Kotlin type emitter.
 
-import { stableHash } from '@malopezr7/bridgekit/contract';
+import { stableHash } from '@gamitolab/bridgekit/contract';
 
 import { CliError } from '../cliError.js';
 import { prepareStateInitial } from './state-initial.js';

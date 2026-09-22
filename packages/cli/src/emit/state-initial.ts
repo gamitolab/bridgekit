@@ -1,4 +1,4 @@
-import { type AnySchema, encode } from '@malopezr7/bridgekit/contract';
+import { type AnySchema, encode } from '@gamitolab/bridgekit/contract';
 
 import { CliError } from '../cliError.js';
 import type {

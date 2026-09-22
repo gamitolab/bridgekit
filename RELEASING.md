@@ -3,7 +3,7 @@
 ## Version policy
 
 The host app chooses React Native and Nitro. BridgeKit's own version is not a
-React Native minor. Peer ranges on `@malopezr7/bridgekit` declare the minimum
+React Native minor. Peer ranges on `@gamitolab/bridgekit` declare the minimum
 supported RN/Nitro; bump those peers (and regenerate Nitrogen) when the
 supported floor moves.
 
@@ -56,7 +56,7 @@ the `beta` tag.
 
 1. Install from a clean checkout with `pnpm install --frozen-lockfile`.
 2. Run `pnpm -r typecheck`.
-3. Run `pnpm --filter @malopezr7/bridgekit test`.
+3. Run `pnpm --filter @gamitolab/bridgekit test`.
 4. Run `pnpm build`.
 5. Verify package contents with the same pack assertions as CI:
 

@@ -1,4 +1,4 @@
-import { encode, t } from '@malopezr7/bridgekit/contract';
+import { encode, t } from '@gamitolab/bridgekit/contract';
 import { emitSwiftContract } from '../emit/swift.js';
 import type { RawContractToken } from '../load.js';
 

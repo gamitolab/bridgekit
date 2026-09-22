@@ -10,7 +10,7 @@ import { NitroBridgeTransport } from './nitroTransport';
 
 const REGISTRY_SYMBOL = Symbol.for('com.bridgekit.registry');
 // Must match the version in packages/core/package.json.
-const PACKAGE_VERSION = '0.3.0-alpha.2';
+const PACKAGE_VERSION = '0.3.0-alpha.4';
 
 interface GlobalRegistry {
   instance: BridgeKitJs;
@@ -32,9 +32,9 @@ export function getDefaultBridgeKit(): BridgeKitJs {
   if (global[REGISTRY_SYMBOL]) {
     const existing = global[REGISTRY_SYMBOL] as GlobalRegistry;
     const msg =
-      `[bridgekit] Duplicate @malopezr7/bridgekit detected. ` +
+      `[bridgekit] Duplicate @gamitolab/bridgekit detected. ` +
       `Already loaded version: ${existing.version}, this copy: ${PACKAGE_VERSION}. ` +
-      `Ensure @malopezr7/bridgekit is deduplicated in your bundle.`;
+      `Ensure @gamitolab/bridgekit is deduplicated in your bundle.`;
     if (isBridgeKitDev()) {
       throw new Error(msg);
     } else {

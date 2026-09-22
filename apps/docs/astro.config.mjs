@@ -19,7 +19,7 @@ export default defineConfig({
 				SocialIcons: './src/components/SocialIcons.astro',
 			},
 			social: [
-				{ icon: 'github', label: 'GitHub', href: 'https://github.com/malopezr7/bridgekit' },
+				{ icon: 'github', label: 'GitHub', href: 'https://github.com/gamitolab/bridgekit' },
 			],
 			head: [
 				{ tag: 'link', attrs: { rel: 'preconnect', href: 'https://fonts.googleapis.com' } },

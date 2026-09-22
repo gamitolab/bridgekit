@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------
-// Global ambient declarations for @malopezr7/bridgekit
+// Global ambient declarations for @gamitolab/bridgekit
 // ---------------------------------------------------------------------------
 
 /** Set by Metro/React Native in dev builds. */

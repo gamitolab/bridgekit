@@ -26,7 +26,7 @@ function writePureContract(filePath: string): void {
   mkdirSync(path.dirname(filePath), { recursive: true });
   writeFileSync(
     filePath,
-    `import { defineContract, t } from '@malopezr7/bridgekit/contract';
+    `import { defineContract, t } from '@gamitolab/bridgekit/contract';
 
 export const FlagSafe = defineContract('flag.safe', {
   methods: {
@@ -71,7 +71,7 @@ describe('contract loader purity checks', () => {
   });
 
   it('rejects multiline relative imports before executing imported code', async () => {
-    await expectPurityRejection(`import { defineContract, t } from '@malopezr7/bridgekit/contract';
+    await expectPurityRejection(`import { defineContract, t } from '@gamitolab/bridgekit/contract';
 import {
   marker,
 } from './evil';
@@ -86,7 +86,7 @@ void marker;
   });
 
   it('rejects CommonJS relative require before worker execution', async () => {
-    await expectPurityRejection(`import { defineContract, t } from '@malopezr7/bridgekit/contract';
+    await expectPurityRejection(`import { defineContract, t } from '@gamitolab/bridgekit/contract';
 
 require('./evil');
 
@@ -99,7 +99,7 @@ export const Impure = defineContract('impure.require', {
   });
 
   it('rejects relative export-star re-exports before executing the re-exported module', async () => {
-    await expectPurityRejection(`import { defineContract, t } from '@malopezr7/bridgekit/contract';
+    await expectPurityRejection(`import { defineContract, t } from '@gamitolab/bridgekit/contract';
 export * from './evil';
 
 export const Impure = defineContract('impure.export', {
@@ -111,7 +111,7 @@ export const Impure = defineContract('impure.export', {
   });
 
   it('rejects relative NodeNext .js specifiers before worker execution', async () => {
-    await expectPurityRejection(`import { defineContract, t } from '@malopezr7/bridgekit/contract';
+    await expectPurityRejection(`import { defineContract, t } from '@gamitolab/bridgekit/contract';
 import { marker } from './evil.js';
 
 export const Impure = defineContract('impure.nodenext', {
@@ -129,7 +129,7 @@ void marker;
     try {
       writeFileSync(
         contractPath,
-        `import { defineContract, t } from '@malopezr7/bridgekit/contract';
+        `import { defineContract, t } from '@gamitolab/bridgekit/contract';
 
 // Documentation note: do not write import(x) in real code.
 const guidance = 'avoid require(x) in contract files';

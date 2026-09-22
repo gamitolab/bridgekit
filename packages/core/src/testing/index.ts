@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------
-// Testing utilities for @malopezr7/bridgekit.
+// Testing utilities for @gamitolab/bridgekit.
 // ---------------------------------------------------------------------------
 
 import type { BridgeContract, ContractShape } from '../contract/contract';

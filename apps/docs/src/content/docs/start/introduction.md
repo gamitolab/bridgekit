@@ -5,7 +5,7 @@ sidebar:
   order: 1
 ---
 
-**BridgeKit** (`@malopezr7/bridgekit`) is a typed, bidirectional communication system between
+**BridgeKit** (`@gamitolab/bridgekit`) is a typed, bidirectional communication system between
 React Native (JavaScript) and native code. A single TypeScript **contract** is the source
 of truth for every crossing of the JS ↔ native boundary. From that one file you get:
 

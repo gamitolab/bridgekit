@@ -6,7 +6,7 @@ const monorepoRoot = path.resolve(projectRoot, '../..');
 
 const config = getDefaultConfig(projectRoot);
 
-// pnpm hoisted monorepo: let Metro resolve @malopezr7/bridgekit and
+// pnpm hoisted monorepo: let Metro resolve @gamitolab/bridgekit and
 // react-native-nitro-modules from the repo root node_modules.
 const customConfig = {
   watchFolders: [monorepoRoot],

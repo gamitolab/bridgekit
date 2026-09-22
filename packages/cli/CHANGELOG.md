@@ -18,7 +18,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `@unchecked Sendable` adapter; host protocols are not `Sendable`. Swift 5
   output is unchanged.
 
+## [0.3.0-alpha.4] - 2026-09-22
+
+### Changed
+
+- Version aligned with `@gamitolab/bridgekit` 0.3.0-alpha.4.
+
 ## [0.3.0-alpha.3] - 2026-09-18
+
+### Changed
+
+- Published name is now `@gamitolab/bridgekit-cli`.
 
 ### Fixed
 
@@ -34,7 +44,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
-- Version aligned with `@malopezr7/bridgekit` 0.3.0-alpha.2.
+- Version aligned with `@gamitolab/bridgekit` 0.3.0-alpha.2.
 
 ## [0.3.0-alpha.1] - 2026-09-17
 
@@ -46,7 +56,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
-- Version aligned with `@malopezr7/bridgekit` 0.2.0-alpha.1 (RN >= 0.86 / Nitro 0.37 peers).
+- Version aligned with `@gamitolab/bridgekit` 0.2.0-alpha.1 (RN >= 0.86 / Nitro 0.37 peers).
 
 ## [0.1.0-alpha.1] - 2026-09-01
 
@@ -55,13 +65,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Generated code and lock files produced by `0.0.1-beta.0` are not compatible.**
   The contract hash written into `bridgekit.lock` and emitted into generated
   Kotlin and Swift is computed by a different algorithm over a different
-  projection — see `@malopezr7/bridgekit` 0.1.0-alpha.1 — and the emitted codecs
+  projection — see `@gamitolab/bridgekit` 0.1.0-alpha.1 — and the emitted codecs
   changed wire format: `oneOf` uses stable `@t: "<kind>:<hash8hex>"` tags instead
   of the positional `@k` index, `int64` is emitted and parsed as a decimal string,
   and `descriptorVersion` is gone.
 - **There is no migration path and no compatibility shim.** Delete the generated
   output and `bridgekit.lock`, then re-run `bridgekit generate` against
-  `@malopezr7/bridgekit@0.1.0-alpha.1`. Regenerate every platform in the same
+  `@gamitolab/bridgekit@0.1.0-alpha.1`. Regenerate every platform in the same
   pass and ship them together — a peer still running `0.0.1-beta.0` output will be
   rejected as contract skew.
 - **Generated filenames can change.** Contracts whose IDs normalize to the same
@@ -109,7 +119,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `bridgekit.lock` rather than by sniffing file contents, so orphan cleanup can
   only delete files it can prove it wrote.
 - The hash used for the lock and for emitted bindings comes from a single shared
-  implementation in `@malopezr7/bridgekit`; the per-member copies in `lock.ts` and
+  implementation in `@gamitolab/bridgekit`; the per-member copies in `lock.ts` and
   `emit/types.ts` are gone.
 - Generated codec output no longer carries trailing whitespace on blank lines, so
   regenerated files diff cleanly.

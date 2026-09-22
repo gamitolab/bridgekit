@@ -17,7 +17,7 @@ demo as `apps/example` (native→JS ping / increment / ticker / counter, JS→na
 | Nitro | react-native-nitro-modules 0.37.1 |
 | Architecture | New Architecture + Hermes (required by Nitro) |
 
-The example pins RN/Nitro/Expo so the workspace can install. `@malopezr7/bridgekit`
+The example pins RN/Nitro/Expo so the workspace can install. `@gamitolab/bridgekit`
 only declares peer ranges; a host app may choose any RN >= 0.86 with Nitro 0.37.x.
 
 Native Xcode/Gradle files in this example are not re-archived here. Run

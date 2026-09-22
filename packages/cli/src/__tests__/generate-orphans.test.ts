@@ -17,7 +17,7 @@ function writeContract(filePath: string, contractId: string): void {
   mkdirSync(path.dirname(filePath), { recursive: true });
   writeFileSync(
     filePath,
-    `import { defineContract, t } from '@malopezr7/bridgekit/contract';
+    `import { defineContract, t } from '@gamitolab/bridgekit/contract';
 export const Demo = defineContract('${contractId}', {
   methods: {
     ping: t.query(t.object({ value: t.string() }), t.string()),

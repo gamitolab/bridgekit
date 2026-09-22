@@ -61,8 +61,8 @@ jobs:
           set -euo pipefail
           tag="${{ inputs.tag || github.ref_name }}"
           case "$tag" in
-            core-v*) pkg_dir=packages/core; pkg_name='@malopezr7/bridgekit'; version="${tag#core-v}" ;;
-            cli-v*)  pkg_dir=packages/cli;  pkg_name='@malopezr7/bridgekit-cli'; version="${tag#cli-v}" ;;
+            core-v*) pkg_dir=packages/core; pkg_name='@gamitolab/bridgekit'; version="${tag#core-v}" ;;
+            cli-v*)  pkg_dir=packages/cli;  pkg_name='@gamitolab/bridgekit-cli'; version="${tag#cli-v}" ;;
             *) echo "::error::Unrecognised release tag '$tag'. Expected core-vX.Y.Z or cli-vX.Y.Z."; exit 1 ;;
           esac
 
@@ -131,8 +131,8 @@ jobs:
 
       - name: Run core test suites
         run: |
-          pnpm --filter @malopezr7/bridgekit test:web
-          pnpm --filter @malopezr7/bridgekit test:native
+          pnpm --filter @gamitolab/bridgekit test:web
+          pnpm --filter @gamitolab/bridgekit test:native
 
       - name: Verify generated bindings are in sync
         run: |

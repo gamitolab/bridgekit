@@ -8,11 +8,11 @@ sidebar:
 import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
 
 Every contract is built with `defineContract(id, shape)` from the pure
-`@malopezr7/bridgekit/contract` entrypoint. The id is validated against
+`@gamitolab/bridgekit/contract` entrypoint. The id is validated against
 `/^[a-z][a-z0-9-]*(\.[a-z][a-z0-9-]*)+$/` — lowercase, dot-separated, `<owner>.<surface>`.
 
 ```ts
-import { defineContract, t } from '@malopezr7/bridgekit/contract';
+import { defineContract, t } from '@gamitolab/bridgekit/contract';
 
 export const AppHost = defineContract('app.host', {
   methods: { /* ... */ },
@@ -37,7 +37,7 @@ descriptors** — pick by taste and by what your codegen path supports.
   derived from the same definition. Great when you want named, reusable object schemas.
 
   ```ts
-  import { defineContract, t } from '@malopezr7/bridgekit/contract';
+  import { defineContract, t } from '@gamitolab/bridgekit/contract';
 
   export const AppHost = defineContract('app.host', {
     methods: {
@@ -64,7 +64,7 @@ descriptors** — pick by taste and by what your codegen path supports.
   `State`). This is the style the live demo uses.
 
   ```ts
-  import { Async, defineContract, State, Stream, Void } from '@malopezr7/bridgekit/contract';
+  import { Async, defineContract, State, Stream, Void } from '@gamitolab/bridgekit/contract';
 
   export const useDemoHost = defineContract('bridgekit.demo-host', {
     methods: {
@@ -120,13 +120,13 @@ export const ExampleFeature = defineContract('example.feature', {
 
 ## The purity rule (enforced)
 
-`@malopezr7/bridgekit/contract` is a **pure, side-effect-free** entrypoint: `defineContract`,
+`@gamitolab/bridgekit/contract` is a **pure, side-effect-free** entrypoint: `defineContract`,
 the `t` namespace, the markers, and type utilities — nothing else. A contract file may
 import **only** this subpath and other contract files.
 
 ```ts
 // ✅ allowed
-import { defineContract, t } from '@malopezr7/bridgekit/contract';
+import { defineContract, t } from '@gamitolab/bridgekit/contract';
 import { PickedFile } from './shared-schemas.contract';
 
 // ❌ rejected by the CLI with file:line

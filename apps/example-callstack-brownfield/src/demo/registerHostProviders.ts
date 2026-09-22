@@ -2,7 +2,7 @@
 // registerHostProviders — process-global provider registration.
 //
 // Imported once at the JS entry point (index.js) after
-// '@malopezr7/bridgekit' initialises the singleton. Registers demo.jsinfo so
+// '@gamitolab/bridgekit' initialises the singleton. Registers demo.jsinfo so
 // native DemoActivity can call getReactNativeVersion / getUserLevel /
 // getUserSegments / clockTicks at any time, regardless of which RN screen
 // is visible. Also registers demo.local before BridgekitDemo renders, so
@@ -12,7 +12,7 @@
 // side-effect, not a hook.
 // ---------------------------------------------------------------------------
 
-import { getDefaultBridgeKit } from '@malopezr7/bridgekit';
+import { getDefaultBridgeKit } from '@gamitolab/bridgekit';
 import { useDemoJsinfo } from './contracts/demo-jsinfo.contract';
 import { useLocalhost } from './contracts/localhost.contract';
 import { jsInfoImpl, localhostImpl } from './providers';

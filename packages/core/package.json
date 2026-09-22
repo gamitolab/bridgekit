@@ -1,17 +1,17 @@
 {
-  "name": "@malopezr7/bridgekit",
-  "version": "0.3.0-alpha.2",
+  "name": "@gamitolab/bridgekit",
+  "version": "0.3.0-alpha.4",
   "description": "Typed bidirectional bridge between React Native and native (Android/iOS)",
   "author": "malopezr7 <malopezr7@gmail.com> (https://github.com/malopezr7)",
   "license": "MIT",
-  "homepage": "https://github.com/malopezr7/bridgekit#readme",
+  "homepage": "https://github.com/gamitolab/bridgekit#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/malopezr7/bridgekit.git",
+    "url": "git+https://github.com/gamitolab/bridgekit.git",
     "directory": "packages/core"
   },
   "bugs": {
-    "url": "https://github.com/malopezr7/bridgekit/issues"
+    "url": "https://github.com/gamitolab/bridgekit/issues"
   },
   "keywords": [
     "react-native",

@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "@callstack/react-native-brownfield": "5.1.0",
-    "@malopezr7/bridgekit": "workspace:*",
+    "@gamitolab/bridgekit": "workspace:*",
     "react": "19.2.3",
     "react-native": "0.86.3",
     "react-native-nitro-modules": "0.37.1"

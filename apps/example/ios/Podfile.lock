@@ -1873,7 +1873,7 @@ PODS:
   - Yoga (0.0.0)
 
 DEPENDENCIES:
-  - "BridgeKit (from `../node_modules/@malopezr7/bridgekit`)"
+  - "BridgeKit (from `../node_modules/@gamitolab/bridgekit`)"
   - FBLazyVector (from `../../../node_modules/react-native/Libraries/FBLazyVector`)
   - hermes-engine (from `../../../node_modules/react-native/sdks/hermes-engine/hermes-engine.podspec`)
   - NitroModules (from `../../../node_modules/react-native-nitro-modules`)
@@ -1954,7 +1954,7 @@ DEPENDENCIES:
 
 EXTERNAL SOURCES:
   BridgeKit:
-    :path: "../node_modules/@malopezr7/bridgekit"
+    :path: "../node_modules/@gamitolab/bridgekit"
   FBLazyVector:
     :path: "../../../node_modules/react-native/Libraries/FBLazyVector"
   hermes-engine:

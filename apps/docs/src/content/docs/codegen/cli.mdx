@@ -101,7 +101,7 @@ via a worker, duck-types the exports for `{ descriptor, hash }`, and serializes 
 Marker type parameters are **erased at runtime**, so they cannot be read by importing. Marker
 contracts are detected by a regex for `Sync<`, `Async<`, `Void<`, `Stream<`, `State<` in
 value position and parsed with **`ts-morph`**: it loads the type checker, injects a stub for
-`@malopezr7/bridgekit/contract`, then walks the `defineContract` AST to extract params/result
+`@gamitolab/bridgekit/contract`, then walks the `defineContract` AST to extract params/result
 types from the generic arguments. No subprocess required.
 
 <Aside type="note">
@@ -112,7 +112,7 @@ same value, because the normalized descriptor is identical.
 ## The purity gate
 
 Before loading, the CLI walks the import graph. Any import other than
-`@malopezr7/bridgekit/contract` or a relative contract path is a **hard error with `file:line`**.
+`@gamitolab/bridgekit/contract` or a relative contract path is a **hard error with `file:line`**.
 This guarantees contracts are safe to import under Node, Jest, and web builds.
 
 ## CI usage

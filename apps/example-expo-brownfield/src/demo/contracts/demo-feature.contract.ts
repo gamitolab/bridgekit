@@ -3,7 +3,7 @@
 // Validates: native → JS typed query direction.
 // ---------------------------------------------------------------------------
 
-import { Async, defineContract, t } from '@malopezr7/bridgekit/contract';
+import { Async, defineContract, t } from '@gamitolab/bridgekit/contract';
 
 export const useDemoFeature = defineContract('bridgekit.demo-feature', {
   methods: {

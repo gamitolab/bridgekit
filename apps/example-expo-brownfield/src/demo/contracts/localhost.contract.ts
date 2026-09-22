@@ -6,7 +6,7 @@
 // and resolved locally WITHOUT crossing to the native transport.
 // ---------------------------------------------------------------------------
 
-import { Async, defineContract, State, Sync, t } from '@malopezr7/bridgekit/contract';
+import { Async, defineContract, State, Sync, t } from '@gamitolab/bridgekit/contract';
 
 export const useLocalhost = defineContract('bridgekit.localhost', {
   methods: {

@@ -12,9 +12,10 @@ version, so the changelog and this file agree on what a given release contains.
 
 ### BF-IOS-01 — packaged `package:ios` still needs a host-side Swift package
 
-The public `BridgeKit` module is C++-free. Getting it into a Node-free host is
-done by adding `packages/core` as a local Swift package (see
-`apps/example-callstack-brownfield/ios/HostApp`). `@callstack/react-native-brownfield`
+The public `BridgeKit` module is C++-free. A Node-free host adds the remote
+package `https://github.com/gamitolab/bridgekit.git` at exact tag `0.3.0-alpha.4`
+and depends on product `BridgeKit` from package `bridgekit`. No local path.
+The in-repo example still uses a path package (`apps/example-callstack-brownfield/ios/HostApp`). `@callstack/react-native-brownfield`
 does not yet copy an arbitrary xcframework into `spm-artifacts/` the way it
 copies `ExpoModulesCore`. `BRIDGEKIT_HOST_PROVIDES_RUNTIME=1` keeps the public
 module out of the packaged RN framework so there is one runtime.
@@ -109,8 +110,8 @@ tool this repository does not own, or has no fix:
 | `esbuild` 0.27.x | `vite` (docs) | fix is 0.28, a breaking line for Vite |
 | `image-size` 1.x | `metro` | no patched version exists |
 
-- **Not affected:** the published packages. `@malopezr7/bridgekit` has no
-  runtime dependencies and `@malopezr7/bridgekit-cli` depends only on `chalk`;
+- **Not affected:** the published packages. `@gamitolab/bridgekit` has no
+  runtime dependencies and `@gamitolab/bridgekit-cli` depends only on `chalk`;
   none of the advisories is reachable from either tarball.
 - **Closes it:** upgrading the tools that pull them in (Astro 7, the next
   brownfield CLI). Renovate is deliberately excluded until the first stable
@@ -131,7 +132,7 @@ invisible.
   force `CLANG_CXX_LIBRARY=libc++` on the BridgeKit pod. The host still chooses
   RN/Nitro via peer ranges (`react-native` >= 0.86, `react-native-nitro-modules`
   ^0.37).
-- **Ships in:** `@malopezr7/bridgekit` 0.2.0-alpha.1.
+- **Ships in:** `@gamitolab/bridgekit` 0.2.0-alpha.1.
 
 ### RT-AND-03 / RT-AND-04 — StreamHub races on Android (WS-5)
 
@@ -159,7 +160,7 @@ had two lifecycle races. 28 unit tests across seven files were quarantined with
   consumers end themselves by throwing `CancellationException` from their own
   collector. All 28 tests are un-quarantined and the Android suite runs 158/158
   repeatedly on a JVM harness.
-- **Ships in:** `@malopezr7/bridgekit` 0.1.0-alpha.1.
+- **Ships in:** `@gamitolab/bridgekit` 0.1.0-alpha.1.
 
 ### CI — `iOS Facade` gate red on `main`
 
@@ -170,4 +171,4 @@ The committed `ios-facade` `.swiftinterface` files still declared
 blocked `release.yml` for every `core-v*` tag. The three interface files are
 back in sync with the source.
 
-- **Ships in:** `@malopezr7/bridgekit` 0.1.0-alpha.1.
+- **Ships in:** `@gamitolab/bridgekit` 0.1.0-alpha.1.

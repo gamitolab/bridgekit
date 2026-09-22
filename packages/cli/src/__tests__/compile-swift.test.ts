@@ -25,7 +25,7 @@ const fixturesDir = path.join(cliRoot, 'src/__tests__/fixtures');
 function ensureBuiltCli(): void {
   if (!existsSync(cliEntry)) {
     throw new Error(
-      `CLI dist entry is missing. Run pnpm --filter @malopezr7/bridgekit-cli build before compiler harness tests: ${cliEntry}`,
+      `CLI dist entry is missing. Run pnpm --filter @gamitolab/bridgekit-cli build before compiler harness tests: ${cliEntry}`,
     );
   }
 }
@@ -496,7 +496,7 @@ describeOnMac('Swift real compiler harness', () => {
   it('typechecks a known-good fixture with the committed BridgeKit simulator framework', () => {
     const outDir = generateSwift(
       {
-        'known-good.contract.ts': `import { defineContract, t } from '@malopezr7/bridgekit/contract';\nexport const KnownGood = defineContract('compile.known-good', { methods: { greet: t.query(t.object({ name: t.string() }), t.string()) } });\n`,
+        'known-good.contract.ts': `import { defineContract, t } from '@gamitolab/bridgekit/contract';\nexport const KnownGood = defineContract('compile.known-good', { methods: { greet: t.query(t.object({ name: t.string() }), t.string()) } });\n`,
       },
       'known-good',
     );
@@ -578,7 +578,7 @@ describeOnMac('Swift real compiler harness', () => {
   it('typechecks an N0c ping/dismiss/state contract in Swift 5 and Swift 6 + MainActor', () => {
     const outDir = generateSwift(
       {
-        'n0c.contract.ts': `import { defineContract, t } from '@malopezr7/bridgekit/contract';
+        'n0c.contract.ts': `import { defineContract, t } from '@gamitolab/bridgekit/contract';
 export const N0c = defineContract('compile.n0c', {
   methods: {
     ping: t.query(t.object({ nonce: t.string() }), t.object({ nonce: t.string() })),

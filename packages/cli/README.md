@@ -1,4 +1,4 @@
-# @malopezr7/bridgekit-cli
+# @gamitolab/bridgekit-cli
 
 Code-generation CLI for [BridgeKit](../core). It reads your TypeScript **contract**
 files and emits native bindings — Kotlin for Android, Swift for iOS — that match the
@@ -13,7 +13,7 @@ runtime wire protocol exactly.
 ## Install
 
 ```sh
-pnpm add -D @malopezr7/bridgekit-cli@alpha
+pnpm add -D @gamitolab/bridgekit-cli@alpha
 ```
 
 This exposes a `bridgekit` binary.

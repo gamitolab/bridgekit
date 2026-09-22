@@ -6,7 +6,7 @@
 </p>
 
 <p align="center">
-  <a href="https://www.npmjs.com/package/@malopezr7/bridgekit"><img src="https://img.shields.io/npm/v/@malopezr7/bridgekit/alpha.svg" alt="npm version" /></a>
+  <a href="https://www.npmjs.com/package/@gamitolab/bridgekit"><img src="https://img.shields.io/npm/v/@gamitolab/bridgekit/alpha.svg" alt="npm version" /></a>
   <img src="https://img.shields.io/badge/platforms-android%20%7C%20ios-blue.svg" alt="platforms" />
   <img src="https://img.shields.io/badge/license-MIT-green.svg" alt="license" />
 </p>
@@ -60,8 +60,8 @@ Kotlin **and** Swift bindings — interfaces, data classes, and codecs.
 
 | Package | Description |
 | ------- | ----------- |
-| [`@malopezr7/bridgekit`](packages/core) | The library: contract layer, JS runtime, React hooks, and the native Android/iOS modules. |
-| [`@malopezr7/bridgekit-cli`](packages/cli) | Code generation — emits Kotlin & Swift bindings from your TypeScript contracts. |
+| [`@gamitolab/bridgekit`](packages/core) | The library: contract layer, JS runtime, React hooks, and the native Android/iOS modules. |
+| [`@gamitolab/bridgekit-cli`](packages/cli) | Code generation — emits Kotlin & Swift bindings from your TypeScript contracts. |
 
 ## Version policy
 
@@ -72,8 +72,8 @@ those versions. Codegen (`nitrogen`) matches the Nitro peer minor.
 ## Install
 
 ```sh
-pnpm add @malopezr7/bridgekit@alpha react-native-nitro-modules
-pnpm add -D @malopezr7/bridgekit-cli@alpha
+pnpm add @gamitolab/bridgekit@alpha
+pnpm add -D @gamitolab/bridgekit-cli@alpha
 cd ios && pod install   # iOS only; Android autolinks
 ```
 

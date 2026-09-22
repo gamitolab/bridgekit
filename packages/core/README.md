@@ -1,4 +1,4 @@
-# @malopezr7/bridgekit
+# @gamitolab/bridgekit
 
 Typed, bidirectional communication between React Native and native code via a **Marker API**.
 One TypeScript contract definition drives JS types, runtime metadata, and generated Kotlin/Swift.
@@ -20,10 +20,10 @@ Built on [Nitro Modules](https://nitro.margelo.com) for the native transport.
 
 ```sh
 # while in alpha, install the @alpha tag
-pnpm add @malopezr7/bridgekit@alpha react-native-nitro-modules
+pnpm add @gamitolab/bridgekit@alpha react-native-nitro-modules
 
 # codegen CLI (dev dependency)
-pnpm add -D @malopezr7/bridgekit-cli@alpha
+pnpm add -D @gamitolab/bridgekit-cli@alpha
 ```
 
 BridgeKit is a Nitro module. After installing:
@@ -48,10 +48,17 @@ skips `BKTransportWeakStubs.m` (stubs in the same image as Nitro swallow
 `provide()`) and the RN target must link with `-Wl,-undefined,dynamic_lookup`
 so `BKTransport*` stay unbound until the host image loads.
 
-1. `pnpm add @malopezr7/bridgekit@alpha react-native-nitro-modules`
+1. `pnpm add @gamitolab/bridgekit@alpha react-native-nitro-modules`
 2. Generate host contracts: `bridgekit generate --platform swift --out-dir ios/HostApp/Generated`
 3. Package RN: `pnpm package:ios` (set `BRIDGEKIT_HOST_PROVIDES_RUNTIME=1` in the RN Podfile)
-4. In the **host** Xcode project: Add Package (`packages/core` → product `BridgeKit`), then:
+4. In the **host** Xcode project, add the remote package. No local path. URL `https://github.com/gamitolab/bridgekit.git`, exact tag `0.3.0-alpha.4`, product `BridgeKit`, package `bridgekit`:
+
+```swift
+.package(url: "https://github.com/gamitolab/bridgekit.git", exact: "0.3.0-alpha.4")
+.product(name: "BridgeKit", package: "bridgekit")
+```
+
+Then:
 
 ```swift
 import BridgeKit
@@ -70,10 +77,10 @@ the same app target) autolinks Nitro and injects public BridgeKit in-process.
 
 | Import | Contents |
 | ------ | -------- |
-| `@malopezr7/bridgekit` | Runtime + React hooks + contract layer (everything) |
-| `@malopezr7/bridgekit/contract` | Contract layer only — zero side effects, safe in Node/Jest/web |
-| `@malopezr7/bridgekit/react` | React hooks (`useBridge`, `useBridgeState`, …) |
-| `@malopezr7/bridgekit/test` | Testing helpers (`createTestBridge`, `mockBridge`) |
+| `@gamitolab/bridgekit` | Runtime + React hooks + contract layer (everything) |
+| `@gamitolab/bridgekit/contract` | Contract layer only — zero side effects, safe in Node/Jest/web |
+| `@gamitolab/bridgekit/react` | React hooks (`useBridge`, `useBridgeState`, …) |
+| `@gamitolab/bridgekit/test` | Testing helpers (`createTestBridge`, `mockBridge`) |
 
 ---
 
@@ -83,7 +90,7 @@ the same app target) autolinks Nitro and injects public BridgeKit in-process.
 
 ```ts
 // connect-host.contract.ts — provided by NATIVE, consumed by JS
-import { defineContract, Async, Void, Stream, State } from '@malopezr7/bridgekit/contract';
+import { defineContract, Async, Void, Stream, State } from '@gamitolab/bridgekit/contract';
 
 export const ConnectHost = defineContract('connect.host', {
   methods: {
@@ -109,7 +116,7 @@ Marker reference:
 
 ### 2. Generate native bindings
 
-The codegen lives in [`@malopezr7/bridgekit-cli`](../cli). Emit Kotlin and/or Swift from the
+The codegen lives in [`@gamitolab/bridgekit-cli`](../cli). Emit Kotlin and/or Swift from the
 same contract:
 
 ```bash
@@ -143,7 +150,7 @@ BridgeKit.default.provide(ConnectHostContract) { ConnectHostProvider() }
 ### 4. Consume from React Native
 
 ```tsx
-import { useBridge, useBridgeState } from '@malopezr7/bridgekit/react';
+import { useBridge, useBridgeState } from '@gamitolab/bridgekit/react';
 import { ConnectHost } from './connect-host.contract';
 
 function LoginButton() {
@@ -162,7 +169,7 @@ function LoginButton() {
 ### 5. Provide from React Native (JS → native direction)
 
 ```tsx
-import { useProvideBridge } from '@malopezr7/bridgekit/react';
+import { useProvideBridge } from '@gamitolab/bridgekit/react';
 import { LiaFeature } from './lia-feature.contract';
 
 function LiaProvider({ children }) {
@@ -186,7 +193,7 @@ val count = lia.getUnreadCount()
 that re-renders automatically when any subscribed state changes.
 
 ```ts
-import { defineContract, Async, State } from '@malopezr7/bridgekit/contract';
+import { defineContract, Async, State } from '@gamitolab/bridgekit/contract';
 
 const UserContract = defineContract('user.contract', {
   methods: {
@@ -211,7 +218,7 @@ const user = UserContract.hook();
 Use `BridgeScopeProvider` to isolate contracts to a feature or instance:
 
 ```tsx
-import { BridgeScopeProvider } from '@malopezr7/bridgekit/react';
+import { BridgeScopeProvider } from '@gamitolab/bridgekit/react';
 
 // Feature scope — multiple instances of the same feature do not cross-talk
 <BridgeScopeProvider feature="checkout" instance={cartId}>
@@ -237,7 +244,7 @@ class ConnectBridgeModule : BridgeKitModule {
 ## Testing
 
 ```ts
-import { createTestBridge } from '@malopezr7/bridgekit/test';
+import { createTestBridge } from '@gamitolab/bridgekit/test';
 
 const { bridgekit } = createTestBridge();
 await bridgekit.provide(ConnectHost, { isLoggedIn: async () => true });

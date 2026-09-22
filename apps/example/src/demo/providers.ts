@@ -11,7 +11,7 @@
 //   demoReverseImpl — impl for demo.reverse (all four markers, consumed by native)
 // ---------------------------------------------------------------------------
 
-import { streamSource } from '@malopezr7/bridgekit';
+import { streamSource } from '@gamitolab/bridgekit';
 
 // ---------------------------------------------------------------------------
 // demo.jsinfo — bridgekit equivalent of native module calls in DemoActivity
