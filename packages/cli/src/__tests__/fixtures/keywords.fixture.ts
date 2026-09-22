@@ -1,5 +1,5 @@
-import type { BridgeContract } from '@malopezr7/bridgekit/contract';
-import { defineContract, t } from '@malopezr7/bridgekit/contract';
+import type { BridgeContract } from '@gamitolab/bridgekit/contract';
+import { defineContract, t } from '@gamitolab/bridgekit/contract';
 
 export const KeywordsFixture: BridgeContract<unknown> = defineContract('compile.keywords', {
   methods: {

@@ -14,11 +14,11 @@ React Native.
 <Steps>
 
 1. **Define a contract** in a `*.contract.ts` file. Import only from the pure
-   `@malopezr7/bridgekit/contract` entrypoint.
+   `@gamitolab/bridgekit/contract` entrypoint.
 
    ```ts
    // app-host.contract.ts
-   import { defineContract, t } from '@malopezr7/bridgekit/contract';
+   import { defineContract, t } from '@gamitolab/bridgekit/contract';
 
    export const AppHost = defineContract('app.host', {
      methods: {
@@ -85,7 +85,7 @@ React Native.
 4. **Consume it from React Native** with a typed proxy and the state/stream hooks.
 
    ```tsx
-   import { useBridge, useBridgeState } from '@malopezr7/bridgekit';
+   import { useBridge, useBridgeState } from '@gamitolab/bridgekit';
 
    function FileScreen() {
      const app = useBridge(AppHost);

@@ -55,7 +55,7 @@ export const useLocalhost = defineContract('bridgekit.localhost', {
 
 ```ts
 // providers.ts
-import { streamSource } from '@malopezr7/bridgekit';
+import { streamSource } from '@gamitolab/bridgekit';
 
 export const jsInfoImpl = {
   getReactNativeVersion: () => Promise.resolve(RN_VERSION),
@@ -93,7 +93,7 @@ regardless of which screen is visible.
 
 ```ts
 // registerHostProviders.ts
-import { getDefaultBridgeKit } from '@malopezr7/bridgekit';
+import { getDefaultBridgeKit } from '@gamitolab/bridgekit';
 
 const bk = getDefaultBridgeKit();
 

@@ -1,4 +1,4 @@
-import { stableHash } from '@malopezr7/bridgekit/contract';
+import { stableHash } from '@gamitolab/bridgekit/contract';
 
 import type { ObjectNode } from '../emit/types.js';
 import { hashMember, KotlinTypeEmitter } from '../emit/types.js';

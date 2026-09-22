@@ -16,7 +16,7 @@ toolchain. Both sides fake cleanly.
 test touches.
 
 ```ts
-import { mockBridge } from '@malopezr7/bridgekit/test';
+import { mockBridge } from '@gamitolab/bridgekit/test';
 
 const mock = mockBridge(AppHost, {
   isLoggedIn: async () => true,
@@ -30,7 +30,7 @@ transport** — JS provides *and* JS consumes, with no native side. Feature logi
 streams and state, runs in plain Jest.
 
 ```ts
-import { createTestBridge } from '@malopezr7/bridgekit/test';
+import { createTestBridge } from '@gamitolab/bridgekit/test';
 
 const { bridgekit } = createTestBridge();
 

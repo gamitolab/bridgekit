@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------
-// @malopezr7/bridgekit — native entry point (Metro / React Native)
+// @gamitolab/bridgekit — native entry point (Metro / React Native)
 //
 // Same export surface as index.ts, but the default instance uses
 // NitroBridgeTransport instead of LoopbackTransport.

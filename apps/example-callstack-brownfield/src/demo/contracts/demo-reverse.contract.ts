@@ -7,7 +7,7 @@
 //   State  — native observes a JS-owned status value that updates on a timer
 // ---------------------------------------------------------------------------
 
-import { Async, defineContract, State, Stream, t, Void } from '@malopezr7/bridgekit/contract';
+import { Async, defineContract, State, Stream, t, Void } from '@gamitolab/bridgekit/contract';
 
 export const useDemoReverse = defineContract('bridgekit.demo-reverse', {
   methods: {

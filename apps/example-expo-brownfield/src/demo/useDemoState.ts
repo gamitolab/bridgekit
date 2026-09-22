@@ -3,8 +3,8 @@
 // Centralised here so the screen component stays thin (pure layout/composition).
 // ---------------------------------------------------------------------------
 
-import { getDefaultBridgeKit, GLOBAL_SCOPE } from '@malopezr7/bridgekit';
-import type { BridgeContract } from '@malopezr7/bridgekit/contract';
+import { getDefaultBridgeKit, GLOBAL_SCOPE } from '@gamitolab/bridgekit';
+import type { BridgeContract } from '@gamitolab/bridgekit/contract';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { EchoEntry } from './components/EchoFeed';
 import { useDemoHost } from './contracts/demo-host.contract';
@@ -23,7 +23,7 @@ export function useDemoState() {
   // fall through to the native transport instead of LocalStateMirror.
 
   // demo.reverse: all four markers — needs Binding ref to call setState
-  const reverseBindingRef = useRef<import('@malopezr7/bridgekit').Binding | null>(null);
+  const reverseBindingRef = useRef<import('@gamitolab/bridgekit').Binding | null>(null);
 
   // Mount effect: provide demo.reverse (external system registration — effect correct here)
   useEffect(() => {

@@ -66,7 +66,7 @@ Because BridgeKit is a singleton that can momentarily exist in two copies (dual-
 cases), errors are matched by a stable `code`, not by class:
 
 ```ts
-import { isBridgeError } from '@malopezr7/bridgekit';
+import { isBridgeError } from '@gamitolab/bridgekit';
 
 try {
   await app.saveFile({ url, name });

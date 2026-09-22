@@ -125,7 +125,7 @@ class JsDispatcherCallbacks(
 // ---- NotReadyDelegate -------------------------------------------------------
 
 private const val BRIDGE_NOT_READY_MSG = "BridgeKit native core not initialized. " +
-    "Ensure the JS bundle entry imports '@malopezr7/bridgekit' before the first call."
+    "Ensure the JS bundle entry imports '@gamitolab/bridgekit' before the first call."
 
 private fun notReadyEnvelope(): Map<String, Any?> = mapOf(
     "ok" to false,

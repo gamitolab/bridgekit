@@ -109,8 +109,8 @@ tool this repository does not own, or has no fix:
 | `esbuild` 0.27.x | `vite` (docs) | fix is 0.28, a breaking line for Vite |
 | `image-size` 1.x | `metro` | no patched version exists |
 
-- **Not affected:** the published packages. `@malopezr7/bridgekit` has no
-  runtime dependencies and `@malopezr7/bridgekit-cli` depends only on `chalk`;
+- **Not affected:** the published packages. `@gamitolab/bridgekit` has no
+  runtime dependencies and `@gamitolab/bridgekit-cli` depends only on `chalk`;
   none of the advisories is reachable from either tarball.
 - **Closes it:** upgrading the tools that pull them in (Astro 7, the next
   brownfield CLI). Renovate is deliberately excluded until the first stable
@@ -131,7 +131,7 @@ invisible.
   force `CLANG_CXX_LIBRARY=libc++` on the BridgeKit pod. The host still chooses
   RN/Nitro via peer ranges (`react-native` >= 0.86, `react-native-nitro-modules`
   ^0.37).
-- **Ships in:** `@malopezr7/bridgekit` 0.2.0-alpha.1.
+- **Ships in:** `@gamitolab/bridgekit` 0.2.0-alpha.1.
 
 ### RT-AND-03 / RT-AND-04 — StreamHub races on Android (WS-5)
 
@@ -159,7 +159,7 @@ had two lifecycle races. 28 unit tests across seven files were quarantined with
   consumers end themselves by throwing `CancellationException` from their own
   collector. All 28 tests are un-quarantined and the Android suite runs 158/158
   repeatedly on a JVM harness.
-- **Ships in:** `@malopezr7/bridgekit` 0.1.0-alpha.1.
+- **Ships in:** `@gamitolab/bridgekit` 0.1.0-alpha.1.
 
 ### CI — `iOS Facade` gate red on `main`
 
@@ -170,4 +170,4 @@ The committed `ios-facade` `.swiftinterface` files still declared
 blocked `release.yml` for every `core-v*` tag. The three interface files are
 back in sync with the source.
 
-- **Ships in:** `@malopezr7/bridgekit` 0.1.0-alpha.1.
+- **Ships in:** `@gamitolab/bridgekit` 0.1.0-alpha.1.

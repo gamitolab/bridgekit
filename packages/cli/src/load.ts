@@ -39,7 +39,7 @@ export interface RawContractToken {
 
 // ---- purity check -----------------------------------------------------------
 
-const ALLOWED_SPECIFIER_REGEX = /^@malopezr7\/bridgekit\/contract/;
+const ALLOWED_SPECIFIER_REGEX = /^@gamitolab\/bridgekit\/contract/;
 
 /**
  * Loader threat model:
@@ -56,7 +56,7 @@ const ALLOWED_SPECIFIER_REGEX = /^@malopezr7\/bridgekit\/contract/;
 
 /**
  * Scan import statements in a .ts file and fail if any import is not:
- * - '@malopezr7/bridgekit/contract'
+ * - '@gamitolab/bridgekit/contract'
  *
  * Returns violation messages in file:line format.
  */
@@ -129,7 +129,7 @@ import { registerHooks } from 'node:module';
 
 ${loaderEncoderWorkerSource()}
 
-// Pre-resolve @malopezr7/bridgekit/contract to its CJS dist using the file being
+// Pre-resolve @gamitolab/bridgekit/contract to its CJS dist using the file being
 // loaded as the resolution base, so that --experimental-strip-types is not
 // applied to node_modules (which supported Node versions refuse to do).
 // This is looked up lazily on first resolution so the worker doesn't fail if
@@ -140,7 +140,7 @@ function getBridgekitContractUrl(contractFilePath) {
   if (_bridgekitContractCjsUrl !== null) return _bridgekitContractCjsUrl;
   try {
     const req = createRequire(contractFilePath);
-    const resolved = req.resolve('@malopezr7/bridgekit/contract');
+    const resolved = req.resolve('@gamitolab/bridgekit/contract');
     _bridgekitContractCjsUrl = pathToFileURL(resolved).href;
   } catch {
     _bridgekitContractCjsUrl = undefined;
@@ -150,9 +150,9 @@ function getBridgekitContractUrl(contractFilePath) {
 
 registerHooks({
   resolve(specifier, context, nextResolve) {
-    // Redirect @malopezr7/bridgekit/contract to the pre-built CJS dist so that
+    // Redirect @gamitolab/bridgekit/contract to the pre-built CJS dist so that
     // --experimental-strip-types is not applied to the .ts source under node_modules.
-    if (specifier === '@malopezr7/bridgekit/contract') {
+    if (specifier === '@gamitolab/bridgekit/contract') {
       const contractFilePath = process.argv[2];
       const url = getBridgekitContractUrl(contractFilePath);
       if (url) return { url, shortCircuit: true };

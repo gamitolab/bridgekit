@@ -168,7 +168,7 @@ describe('contract loader state initials', () => {
     try {
       writeFileSync(
         contractPath,
-        `import { defineContract, t } from '@malopezr7/bridgekit/contract';
+        `import { defineContract, t } from '@gamitolab/bridgekit/contract';
 
 export const LoaderValues = defineContract('loader.values', {
   state: {
@@ -206,7 +206,7 @@ export const LoaderValues = defineContract('loader.values', {
     try {
       writeFileSync(
         contractPath,
-        `import { defineContract, t } from '@malopezr7/bridgekit/contract';
+        `import { defineContract, t } from '@gamitolab/bridgekit/contract';
 export const PayloadLimit = defineContract('loader.payload-limit', {
   state: { value: t.state(t.string(), 'x'.repeat(${MAX_LOADER_PAYLOAD_BYTES})) },
 });

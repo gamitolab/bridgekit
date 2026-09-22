@@ -1,5 +1,5 @@
-import type { ContractDescriptor } from '@malopezr7/bridgekit/contract';
-import { memberHashes } from '@malopezr7/bridgekit/contract';
+import type { ContractDescriptor } from '@gamitolab/bridgekit/contract';
+import { memberHashes } from '@gamitolab/bridgekit/contract';
 import type { RawContractToken } from '../load.js';
 import { buildLock } from '../lock.js';
 

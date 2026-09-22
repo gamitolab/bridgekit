@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------
-// @malopezr7/bridgekit — main entry point
+// @gamitolab/bridgekit — main entry point
 //
 // Exports: contract layer + runtime + react layer.
 // Default BridgeKitJs instance is created LAZILY on first access via getDefaultBridgeKit().

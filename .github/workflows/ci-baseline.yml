@@ -79,10 +79,10 @@ jobs:
         run: pnpm -r typecheck
 
       - name: Run web Jest project
-        run: pnpm --filter @malopezr7/bridgekit test:web
+        run: pnpm --filter @gamitolab/bridgekit test:web
 
       - name: Run native Jest project
-        run: pnpm --filter @malopezr7/bridgekit test:native
+        run: pnpm --filter @gamitolab/bridgekit test:native
 
       - name: Verify core package contents
         working-directory: packages/core
@@ -157,16 +157,16 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build core contract exports
-        run: pnpm --filter @malopezr7/bridgekit build
+        run: pnpm --filter @gamitolab/bridgekit build
 
       - name: Build CLI
-        run: pnpm --filter @malopezr7/bridgekit-cli build
+        run: pnpm --filter @gamitolab/bridgekit-cli build
 
       # Single Jest pass: the negative Kotlin compiler gate is enabled inline
       # instead of re-running the whole test file a second time. Gradle-backed
       # tests live in one file, so they execute sequentially in one worker.
       - name: Run CLI Jest tests (with Kotlin negative gate)
-        run: BRIDGEKIT_RUN_KOTLIN_NEGATIVE=1 pnpm --filter @malopezr7/bridgekit-cli test
+        run: BRIDGEKIT_RUN_KOTLIN_NEGATIVE=1 pnpm --filter @gamitolab/bridgekit-cli test
 
       # One Gradle invocation for both gates: generated-fixture compilation and
       # the BridgeKit core-library unit tests share the daemon and build cache.
@@ -174,7 +174,7 @@ jobs:
       # unit tests to actually execute instead of replaying a build-cache hit.
       - name: Run Gradle gates (fixture compile + core unit tests)
         working-directory: apps/example/android
-        run: ./gradlew --continue :app:compileDebugKotlin :malopezr7_bridgekit:testDebugUnitTest --rerun -PbridgekitGeneratedFixturesDir=${{ github.workspace }}/packages/cli/build/generated-fixtures/kotlin-good
+        run: ./gradlew --continue :app:compileDebugKotlin :gamitolab_bridgekit:testDebugUnitTest --rerun -PbridgekitGeneratedFixturesDir=${{ github.workspace }}/packages/cli/build/generated-fixtures/kotlin-good
 
   swift:
     name: Swift checks
@@ -194,10 +194,10 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build core contract exports
-        run: pnpm --filter @malopezr7/bridgekit build
+        run: pnpm --filter @gamitolab/bridgekit build
 
       - name: Build CLI
-        run: pnpm --filter @malopezr7/bridgekit-cli build
+        run: pnpm --filter @gamitolab/bridgekit-cli build
 
       # Only the Darwin-gated Swift harness runs here; the rest of the CLI
       # suite is covered by the jvm job on Ubuntu. This also doubles as the
@@ -206,7 +206,7 @@ jobs:
       # emitter now calls fails here in under a minute. That is exactly how the
       # S5 skew surfaced.
       - name: Run Swift compiler harness
-        run: pnpm --filter @malopezr7/bridgekit-cli exec jest --config ./jest.config.cjs compile-swift.test.ts
+        run: pnpm --filter @gamitolab/bridgekit-cli exec jest --config ./jest.config.cjs compile-swift.test.ts
 
       # Compiles the iOS runtime against the actual iOS SDK. Nothing in CI did
       # this before, which is how two blocking errors sat on main for 23 days:

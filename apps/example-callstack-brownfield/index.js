@@ -9,7 +9,7 @@
 import { AppRegistry } from 'react-native';
 
 // Initialize the BridgeKit singleton (connects the Nitro transport) before any screen.
-import '@malopezr7/bridgekit';
+import '@gamitolab/bridgekit';
 // Register demo.jsinfo / demo.local globally so native can consume JS at any time.
 import './src/demo/registerHostProviders';
 

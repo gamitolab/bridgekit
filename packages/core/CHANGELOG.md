@@ -28,6 +28,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [0.3.0-alpha.2] - 2026-09-17
 
+### Changed
+
+- Published name is now `@gamitolab/bridgekit`. The `0.0.1-beta` line remains the abandoned `@malopezr7` publish.
+
 ### Fixed
 
 - `BridgeKitNitro` no longer sets `SWIFT_OBJC_BRIDGING_HEADER`. Framework
@@ -94,7 +98,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **There is no migration path and no compatibility shim.** Payloads produced by a
   `0.0.1-beta.x` peer are not decodable here and surface as contract skew.
   Consumers must regenerate every contract and every `bridgekit.lock` with
-  `@malopezr7/bridgekit-cli@0.1.0-alpha.1`, and ship the JS and native halves
+  `@gamitolab/bridgekit-cli@0.1.0-alpha.1`, and ship the JS and native halves
   together — a mixed deployment will not interoperate.
 
 ### Added

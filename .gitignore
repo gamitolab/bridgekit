@@ -29,6 +29,11 @@ packages/core/ios-xcframework/NitroPrivateHeaders/
 packages/core/ios-xcframework/BridgeKitXCFramework.xcodeproj/
 packages/core/ios-xcframework/BridgeKitXCFramework.xcworkspace/
 
+# local credentials — never commit
+.env
+.env.*
+!.env.example
+
 # local agent config
 .atl/
 .claude/

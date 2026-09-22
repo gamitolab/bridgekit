@@ -18,9 +18,9 @@ One-page recall. Follow the links for detail.
 | `State<V>(initial)` | `t.state(value, initial)` | state | either |
 
 ```ts
-import { defineContract, t } from '@malopezr7/bridgekit/contract';
+import { defineContract, t } from '@gamitolab/bridgekit/contract';
 // or markers:
-import { Async, Void, Stream, State, Sync, defineContract } from '@malopezr7/bridgekit/contract';
+import { Async, Void, Stream, State, Sync, defineContract } from '@gamitolab/bridgekit/contract';
 ```
 
 ## Schema types (`t.*`)

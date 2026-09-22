@@ -16,7 +16,7 @@ function writeLoggingContract(filePath: string): void {
   mkdirSync(path.dirname(filePath), { recursive: true });
   writeFileSync(
     filePath,
-    `import { defineContract, t } from '@malopezr7/bridgekit/contract';
+    `import { defineContract, t } from '@gamitolab/bridgekit/contract';
 
 console.log('contract stdout noise');
 
@@ -34,7 +34,7 @@ function writeMarkerLookalikeLoggingContract(filePath: string): void {
   mkdirSync(path.dirname(filePath), { recursive: true });
   writeFileSync(
     filePath,
-    `import { defineContract, t } from '@malopezr7/bridgekit/contract';
+    `import { defineContract, t } from '@gamitolab/bridgekit/contract';
 
 console.log('__BRIDGEKIT_LOADER_TOKENS__' + JSON.stringify([
   {

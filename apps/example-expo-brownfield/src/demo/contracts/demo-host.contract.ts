@@ -10,7 +10,7 @@
 //   echoes      — Stream<string> native transforms + echoes text back (bidirectional showcase)
 // ---------------------------------------------------------------------------
 
-import { Async, defineContract, State, Stream, t, Void } from '@malopezr7/bridgekit/contract';
+import { Async, defineContract, State, Stream, t, Void } from '@gamitolab/bridgekit/contract';
 
 export const useDemoHost = defineContract('bridgekit.demo-host', {
   methods: {

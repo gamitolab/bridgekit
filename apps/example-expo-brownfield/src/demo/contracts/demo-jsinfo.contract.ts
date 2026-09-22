@@ -6,7 +6,7 @@
 // native subscribes, JS emits ~1 value/s.
 // ---------------------------------------------------------------------------
 
-import { Async, defineContract, Stream, t } from '@malopezr7/bridgekit/contract';
+import { Async, defineContract, Stream, t } from '@gamitolab/bridgekit/contract';
 
 export const useDemoJsinfo = defineContract('bridgekit.demo-jsinfo', {
   methods: {

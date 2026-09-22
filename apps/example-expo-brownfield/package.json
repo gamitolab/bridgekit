@@ -11,7 +11,7 @@
     "generate:ios": "node ../../packages/cli/dist/index.js generate --contracts \"src/demo/contracts/*.contract.ts\" --out-dir ios/BridgeKitExpoBrownfield/Generated --platform swift"
   },
   "dependencies": {
-    "@malopezr7/bridgekit": "workspace:*",
+    "@gamitolab/bridgekit": "workspace:*",
     "expo": "~57.0.9",
     "expo-modules-autolinking": "~57.0.9",
     "expo-modules-core": "~57.0.8",

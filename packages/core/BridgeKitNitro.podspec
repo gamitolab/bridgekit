@@ -12,7 +12,7 @@ Pod::Spec.new do |s|
   s.authors      = package["author"]
 
   s.platforms    = { :ios => "15.1" }
-  s.source       = { :git => "https://github.com/malopezr7/bridgekit.git", :tag => "core-v#{s.version}" }
+  s.source       = { :git => "https://github.com/gamitolab/bridgekit.git", :tag => "core-v#{s.version}" }
 
   s.source_files = [
     "ios/nitro/**/*.{h,m,mm,swift}",

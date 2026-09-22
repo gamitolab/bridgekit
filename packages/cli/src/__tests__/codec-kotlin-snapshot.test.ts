@@ -1,4 +1,4 @@
-import { t } from '@malopezr7/bridgekit/contract';
+import { t } from '@gamitolab/bridgekit/contract';
 import { emitKotlinContract } from '../emit/kotlin.js';
 import type { RawContractToken } from '../load.js';
 

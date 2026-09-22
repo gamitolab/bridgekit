@@ -32,9 +32,9 @@ export function getDefaultBridgeKit(): BridgeKitJs {
   if (global[REGISTRY_SYMBOL]) {
     const existing = global[REGISTRY_SYMBOL] as GlobalRegistry;
     const msg =
-      `[bridgekit] Duplicate @malopezr7/bridgekit detected. ` +
+      `[bridgekit] Duplicate @gamitolab/bridgekit detected. ` +
       `Already loaded version: ${existing.version}, this copy: ${PACKAGE_VERSION}. ` +
-      `Ensure @malopezr7/bridgekit is deduplicated in your bundle.`;
+      `Ensure @gamitolab/bridgekit is deduplicated in your bundle.`;
     if (isBridgeKitDev()) {
       throw new Error(msg);
     } else {

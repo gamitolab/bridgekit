@@ -11,7 +11,7 @@ Pod::Spec.new do |s|
   s.authors      = package["author"]
 
   s.platforms    = { :ios => "15.1" }
-  s.source       = { :git => "https://github.com/malopezr7/bridgekit.git", :tag => "core-v#{s.version}" }
+  s.source       = { :git => "https://github.com/gamitolab/bridgekit.git", :tag => "core-v#{s.version}" }
 
   # Public Swift API + the C/ObjC transport seam implementation.
   # No Nitro, no JSI, no C++. A brownfield host can import this module.

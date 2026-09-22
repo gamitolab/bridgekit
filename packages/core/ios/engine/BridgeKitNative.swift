@@ -71,7 +71,7 @@ final class BridgeKitNative {
 // MARK: - NotReadyDelegate
 
 private let BRIDGE_NOT_READY_MSG = "BridgeKit native core not initialized. " +
-    "Ensure the JS bundle entry imports '@malopezr7/bridgekit' before the first call."
+    "Ensure the JS bundle entry imports '@gamitolab/bridgekit' before the first call."
 
 private func notReadyEnvelope() -> [String: Any?] {
     ["ok": false, "code": "BRIDGE_NOT_READY", "message": BRIDGE_NOT_READY_MSG]
