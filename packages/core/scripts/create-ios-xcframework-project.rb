@@ -154,14 +154,21 @@ umbrella_ref = project.main_group.new_file('BridgeKit.h')
 umbrella_build_file = framework.headers_build_phase.add_file_reference(umbrella_ref)
 umbrella_build_file.settings = { 'ATTRIBUTES' => ['Public'] }
 
+# The C/ObjC transport seam is public, as in the BridgeKit pod: the engine's
+# Swift reaches BKTransportHooks through this module's umbrella.
+seam_ref = project.main_group.new_file('../ios/seam/BKTransport.h')
+seam_build_file = framework.headers_build_phase.add_file_reference(seam_ref)
+seam_build_file.settings = { 'ATTRIBUTES' => ['Public'] }
+
+# BridgeKit is the public, Nitro-free engine (same split as the root
+# Package.swift and the BridgeKit/BridgeKitNitro pods): the Nitro transport and
+# Nitrogen output ship in BridgeKitNitro, not in this facade.
 source_globs = [
-  'ios/**/*.{swift,m,mm,cpp}',
-  'nitrogen/generated/shared/c++/**/*.{cpp}',
-  'nitrogen/generated/ios/**/*.{swift,mm,cpp}'
+  'ios/**/*.{swift,m,mm,cpp}'
 ]
 exclude_patterns = [
   %r{/ios/__tests__/},
-  %r{/nitrogen/generated/android/}
+  %r{/ios/nitro/}
 ]
 
 source_globs.flat_map { |pattern| Dir.glob((core_root + pattern).to_s, File::FNM_EXTGLOB) }
