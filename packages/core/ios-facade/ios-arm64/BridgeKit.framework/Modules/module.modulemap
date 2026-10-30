@@ -4,7 +4,3 @@ framework module BridgeKit {
 
   module * { export * }
 }
-
-module BridgeKit.Swift {
-  header "BridgeKit-Swift.h"
-}

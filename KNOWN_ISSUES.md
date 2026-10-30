@@ -119,6 +119,20 @@ tool this repository does not own, or has no fix:
 
 ## Resolved, not yet published
 
+### CI — `iOS Facade` red since the Nitro split, blocking every core release
+
+After `BridgeKit` and `BridgeKitNitro` were split, the facade build still
+compiled the Nitro transport and Nitrogen output into `BridgeKit.xcframework`
+and its umbrella still included `BridgeKit-Swift-Cxx-Bridge.hpp`, which
+Nitrogen now emits as `BridgeKitNitro-Swift-Cxx-Bridge.hpp`. The archive failed
+with `'BridgeKit-Swift-Cxx-Bridge.hpp' file not found`, and `release.yml` skipped
+publishing every `core-v*` tag.
+
+- **Fix:** the facade compiles the same Nitro-free sources as the `BridgeKit`
+  pod and the root `Package.swift`, and publishes `BKTransport.h` from its
+  umbrella. The public `.swiftinterface` is unchanged.
+- **Ships in:** `@gamitolab/bridgekit` 0.3.0-alpha.5.
+
 ### RT-CORE-02 — `stateObserve` did not deliver the current value
 
 `StateStore.observe` on iOS and Android only registered the callback, so a JS
