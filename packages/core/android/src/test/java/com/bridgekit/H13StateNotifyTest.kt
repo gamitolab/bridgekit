@@ -35,6 +35,8 @@ class H13StateNotifyTest {
         stateStore.observe("c1", Scope.Global, "key", epoch = 1) { map ->
             received.add(map)
         }
+        assertEquals("observe replays the current value", listOf(mapOf<String, Any?>("v" to "hello")), received)
+        received.clear()
 
         // Confirm initial write-path notify works
         stateStore.setNativeValue("c1", Scope.Global, "key", "updated")
@@ -62,6 +64,9 @@ class H13StateNotifyTest {
 
         stateStore.observe("c1", Scope.Global, "key", epoch = 1) { c1Received.add(it) }
         stateStore.observe("c2", Scope.Global, "key", epoch = 1) { c2Received.add(it) }
+        // Drop the replay of the current values; this test is about the gone signal.
+        c1Received.clear()
+        c2Received.clear()
 
         stateStore.markUnprovided("c1", Scope.Global)
 
@@ -81,6 +86,8 @@ class H13StateNotifyTest {
 
         val received = mutableListOf<Map<String, Any?>>()
         store.observe("js.c", Scope.Global, "count", epoch = 1) { received.add(it) }
+        assertEquals("observe replays the current value", listOf(mapOf<String, Any?>("v" to 10)), received)
+        received.clear()
 
         // Trigger epoch swap → Replacing
         store.markJsContractsUnprovided(setOf("js.c"))

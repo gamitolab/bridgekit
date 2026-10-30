@@ -114,6 +114,13 @@ internal final class StateStore {
 
     // MARK: - Observers
 
+    /// Register an observer and replay the current value (replay-latest).
+    ///
+    /// A provider stream that never re-emits an equal value (a Kotlin StateFlow,
+    /// a deduplicating publisher) would otherwise leave a late subscriber holding
+    /// whatever it saw before. Only `.available` is replayed; gone states keep the
+    /// mirror's own status. Called with the engine lock held, so the replay is
+    /// delivered before any write that races with registration.
     internal func observe(
         contractId: String,
         scope: Scope,
@@ -121,15 +128,22 @@ internal final class StateStore {
         epoch: Int64,
         onChange: @escaping ([String: Any?]) -> Void
     ) -> String {
+        lock.lock()
+        defer { lock.unlock() }
         obsCounter += 1
         let obsId = "obs_\(obsCounter)"
+        let scopeKey = scope.serialized()
         observers[obsId] = Observer(
             contractId: contractId,
             stateKey: stateKey,
-            scopeKey: scope.serialized(),
+            scopeKey: scopeKey,
             onChange: onChange,
             epoch: epoch
         )
+        let key = StoreKey(contractId: contractId, stateKey: stateKey, scopeKey: scopeKey)
+        if case .available(let value)? = states[key] {
+            onChange(["v": value])
+        }
         return obsId
     }
 

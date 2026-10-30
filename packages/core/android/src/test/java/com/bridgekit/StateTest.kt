@@ -95,11 +95,55 @@ class StateTest {
         stateStore.seedNativeState("c1", Scope.Global, "key", "a")
         var callCount = 0
         val obsId = stateStore.observe("c1", Scope.Global, "key", epoch = 1) { callCount++ }
+        assertEquals(1, callCount) // replay of "a"
         stateStore.setNativeValue("c1", Scope.Global, "key", "b")
-        assertEquals(1, callCount)
+        assertEquals(2, callCount)
         stateStore.unobserve(obsId)
         stateStore.setNativeValue("c1", Scope.Global, "key", "c")
-        assertEquals(1, callCount) // no additional calls
+        assertEquals(2, callCount) // no additional calls
+    }
+
+    // ---- replay-latest on observe -----------------------------------------------
+
+    @Test
+    fun `observe delivers the current value immediately`() {
+        stateStore.seedNativeState("c1", Scope.Global, "key", "a")
+        stateStore.setNativeValue("c1", Scope.Global, "key", "b")
+        val received = mutableListOf<Map<String, Any?>>()
+        stateStore.observe("c1", Scope.Global, "key", epoch = 1) { received.add(it) }
+        assertEquals(listOf(mapOf<String, Any?>("v" to "b")), received)
+    }
+
+    @Test
+    fun `re-observing after an unobserved change delivers the latest value`() {
+        // A StateFlow-backed provider never re-emits an equal value, so a JS mirror
+        // that was not observing when the value changed must get it on (re)subscribe.
+        stateStore.seedNativeState("c1", Scope.Global, "key", "a")
+        val first = stateStore.observe("c1", Scope.Global, "key", epoch = 1) {}
+        stateStore.unobserve(first)
+        stateStore.setNativeValue("c1", Scope.Global, "key", "b")
+        var received: Any? = null
+        stateStore.observe("c1", Scope.Global, "key", epoch = 1) { received = it["v"] }
+        assertEquals("b", received)
+    }
+
+    @Test
+    fun `observe delivers a JS-provided value immediately`() {
+        stateStore.writeFromJs("c1", Scope.Global, "key", 42, nativeOwnsBinding = false)
+        var received: Any? = null
+        stateStore.observe("c1", Scope.Global, "key", epoch = 1) { received = it["v"] }
+        assertEquals(42, received)
+    }
+
+    @Test
+    fun `observe does not emit when no value is available`() {
+        var callCount = 0
+        stateStore.observe("c1", Scope.Global, "missing", epoch = 1) { callCount++ }
+        assertEquals(0, callCount)
+        stateStore.seedNativeState("c2", Scope.Global, "key", "a")
+        stateStore.markUnprovided("c2", Scope.Global)
+        stateStore.observe("c2", Scope.Global, "key", epoch = 1) { callCount++ }
+        assertEquals(0, callCount)
     }
 
     // ---- NOT_PROVIDER guard ---------------------------------------------------

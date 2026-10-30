@@ -53,6 +53,10 @@ export interface BridgeTransport {
   emitFromJs(streamId: string, value: unknown): void;
   endFromJs(streamId: string, end: ResultEnvelope): void;
   stateRead(env: CallEnvelope): ResultEnvelope;
+  /**
+   * Observe a provider state. Replay-latest: when the state currently holds a
+   * value, `onChange` receives it on subscribe, then every later change.
+   */
   stateObserve(env: CallEnvelope, onChange: (value: unknown) => void): string;
   stateUnobserve(obsId: string): void;
   stateWrite(env: CallEnvelope): ResultEnvelope;

@@ -13,7 +13,7 @@ version, so the changelog and this file agree on what a given release contains.
 ### BF-IOS-01 — packaged `package:ios` still needs a host-side Swift package
 
 The public `BridgeKit` module is C++-free. A Node-free host adds the remote
-package `https://github.com/gamitolab/bridgekit.git` at exact tag `0.3.0-alpha.4`
+package `https://github.com/gamitolab/bridgekit.git` at exact tag `0.3.0-alpha.5`
 and depends on product `BridgeKit` from package `bridgekit`. No local path.
 The in-repo example still uses a path package (`apps/example-callstack-brownfield/ios/HostApp`). `@callstack/react-native-brownfield`
 does not yet copy an arbitrary xcframework into `spm-artifacts/` the way it
@@ -118,6 +118,22 @@ tool this repository does not own, or has no fix:
   release (see `RELEASING.md`).
 
 ## Resolved, not yet published
+
+### RT-CORE-02 — `stateObserve` did not deliver the current value
+
+`StateStore.observe` on iOS and Android only registered the callback, so a JS
+state mirror that subscribed after the value changed kept its previous snapshot
+(the connection-time hydration, or what it saw before its last unsubscribe)
+until the next change. A host backed by a Kotlin `StateFlow` never re-emits an
+equal value, so the mirror could stay stale indefinitely — e.g. a screen that
+mounts after the state changed while no other screen was observing it. The JS
+loopback transport already replayed the current value; native did not.
+
+- **Fix:** `StateStore.observe` replays the current value when it is
+  `Available` (replay-latest), atomically with registration so a racing write
+  is never overtaken by the replay. Gone states (`Replacing` / `Unprovided`)
+  and absent entries emit nothing, as before.
+- **Ships in:** `@gamitolab/bridgekit` 0.3.0-alpha.5.
 
 ### RT-IOS-03 — Xcode 27 could not build the BridgeKit Clang module (`<regex>` missing)
 
