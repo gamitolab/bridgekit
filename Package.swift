@@ -3,7 +3,7 @@
 // Remote Swift Package Manager entry. SPM only reads Package.swift at the
 // repository root, so a host can depend on a tag without a local checkout:
 //
-//   .package(url: "https://github.com/gamitolab/bridgekit.git", exact: "0.3.0-alpha.4")
+//   .package(url: "https://github.com/gamitolab/bridgekit.git", exact: "0.3.0-alpha.5")
 //   .product(name: "BridgeKit", package: "bridgekit")
 //
 // packages/core/Package.swift stays for `swift test` in that directory.
