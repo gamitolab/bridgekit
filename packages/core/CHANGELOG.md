@@ -26,6 +26,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `BridgeKitNitro` disables `SWIFT_VERIFY_EMITTED_MODULE_INTERFACE` so Xcode 27
   does not rebuild the C++ umbrella while verifying the Swift module.
 
+## [0.3.0-alpha.5] - 2026-10-30
+
+### Fixed
+
+- `stateObserve` replays the current value on subscribe (iOS and Android), so
+  `useBridgeState` no longer keeps a stale snapshot when it subscribes after a
+  change; a `StateFlow`-backed host never re-emits an equal value, which left it
+  stale indefinitely (RT-CORE-02).
+
 ## [0.3.0-alpha.4] - 2026-09-22
 
 ### Added

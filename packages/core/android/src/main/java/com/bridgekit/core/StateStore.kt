@@ -67,6 +67,11 @@ internal class StateStore(
     private val observers = ConcurrentHashMap<String, Observer>()
     private val obsCounter = AtomicLong(0)
 
+    // Serialises observer registration (with its replay) against value transitions and
+    // their notifications, so a replayed value is never delivered after a newer one.
+    // Reentrant (JVM monitor): an observer callback may touch the store again.
+    private val notifyLock = Any()
+
     // ---- native-provided seeding -------------------------------------------------
 
     /**
@@ -94,9 +99,11 @@ internal class StateStore(
      */
     fun setNativeValue(contractId: String, scope: Scope, stateKey: String, value: Any?) {
         val key = StoreKey(contractId, stateKey, scope.serialize())
-        val flow = getOrCreate(key, BridgeValue.Available(value))
-        flow.value = BridgeValue.Available(value)
-        notifyObservers(contractId, stateKey, scope, value)
+        synchronized(notifyLock) {
+            val flow = getOrCreate(key, BridgeValue.Available(value))
+            flow.value = BridgeValue.Available(value)
+            notifyObservers(contractId, stateKey, scope, value)
+        }
     }
 
     // ---- JS-provided writes -----------------------------------------------------
@@ -123,9 +130,11 @@ internal class StateStore(
         val key = StoreKey(contractId, stateKey, scope.serialize())
         // Cancel any active replacing→unprovided timer — JS provider re-provided.
         graceJobs.remove(key.toString())?.cancel()
-        val flow = getOrCreate(key, BridgeValue.Available(value))
-        flow.value = BridgeValue.Available(value)
-        notifyObservers(contractId, stateKey, scope, value)
+        synchronized(notifyLock) {
+            val flow = getOrCreate(key, BridgeValue.Available(value))
+            flow.value = BridgeValue.Available(value)
+            notifyObservers(contractId, stateKey, scope, value)
+        }
         return mapOf("ok" to true, "value" to mapOf("v" to value))
     }
 
@@ -143,16 +152,33 @@ internal class StateStore(
 
     // ---- observers -------------------------------------------------------------
 
+    /**
+     * Register an observer and replay the current value (replay-latest).
+     *
+     * A provider [StateFlow] never re-emits an equal value, so without the replay a
+     * subscriber that registers after a change would keep its previous snapshot until
+     * the next distinct value. Only [BridgeValue.Available] is replayed; gone states
+     * keep the mirror's own status.
+     */
     fun observe(
         contractId: String,
         scope: Scope,
         stateKey: String,
         epoch: Long,
         onChange: (Map<String, Any?>) -> Unit,
-    ): String {
+    ): String = synchronized(notifyLock) {
         val obsId = "obs_${obsCounter.incrementAndGet()}"
-        observers[obsId] = Observer(contractId, stateKey, scope.serialize(), onChange, epoch)
-        return obsId
+        val scopeKey = scope.serialize()
+        observers[obsId] = Observer(contractId, stateKey, scopeKey, onChange, epoch)
+        val current = states[StoreKey(contractId, stateKey, scopeKey)]?.value
+        if (current is BridgeValue.Available) {
+            try {
+                onChange(mapOf("v" to current.value))
+            } catch (_: Exception) {
+                // Never let observer failure propagate
+            }
+        }
+        obsId
     }
 
     fun unobserve(obsId: String) {
@@ -221,9 +247,11 @@ internal class StateStore(
         val scopeKey = scope.serialize()
         for ((key, flow) in states) {
             if (key.contractId == contractId && key.scopeKey == scopeKey) {
-                val lastKnown = flow.value.valueOrNull()
-                flow.value = BridgeValue.Unprovided(lastKnown)
-                notifyObserversGone(contractId, key.stateKey, scope)
+                synchronized(notifyLock) {
+                    val lastKnown = flow.value.valueOrNull()
+                    flow.value = BridgeValue.Unprovided(lastKnown)
+                    notifyObserversGone(contractId, key.stateKey, scope)
+                }
             }
         }
     }
@@ -242,10 +270,12 @@ internal class StateStore(
             if (key.contractId !in jsContractIds) continue
 
             val lastKnown = flow.value.valueOrNull()
-            flow.value = BridgeValue.Replacing(lastKnown)
+            synchronized(notifyLock) {
+                flow.value = BridgeValue.Replacing(lastKnown)
 
-            // Notify on Replacing transition: omit "v" key so map.v === undefined in JS.
-            notifyObserversGone(key.contractId, key.stateKey, Scope.deserialize(key.scopeKey))
+                // Notify on Replacing transition: omit "v" key so map.v === undefined in JS.
+                notifyObserversGone(key.contractId, key.stateKey, Scope.deserialize(key.scopeKey))
+            }
 
             // Cancel any prior grace job for this key before starting a new one.
             val keyStr = key.toString()
@@ -256,9 +286,11 @@ internal class StateStore(
                 // Only transition to Unprovided if still in Replacing state.
                 // If a re-provision arrived during the window, the flow is now Available
                 // and we should NOT overwrite it.
-                if (flow.value is BridgeValue.Replacing) {
-                    flow.value = BridgeValue.Unprovided(lastKnown)
-                    notifyObserversGone(key.contractId, key.stateKey, Scope.deserialize(key.scopeKey))
+                synchronized(notifyLock) {
+                    if (flow.value is BridgeValue.Replacing) {
+                        flow.value = BridgeValue.Unprovided(lastKnown)
+                        notifyObserversGone(key.contractId, key.stateKey, Scope.deserialize(key.scopeKey))
+                    }
                 }
                 graceJobs.remove(keyStr)
             }

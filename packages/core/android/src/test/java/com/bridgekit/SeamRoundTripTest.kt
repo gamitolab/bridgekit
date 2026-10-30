@@ -316,14 +316,14 @@ class SeamRoundTripTest {
 
         // Give the observation callback time to fire
         withTimeout(1_000) {
-            while (stub.stateWrites.isEmpty()) {
+            while (stub.stateWrites.none { it["v"] == "active" }) {
                 delay(10)
             }
         }
 
-        assertTrue("State write must be delivered to observer", stub.stateWrites.isNotEmpty())
-        val stateWrite = stub.stateWrites.first { it.containsKey("v") }
-        assertEquals("active", stateWrite["v"])
+        // The first delivery is the replay of the current value; the change follows it.
+        val values = stub.stateWrites.filter { it.containsKey("v") }.map { it["v"] }
+        assertEquals(listOf("idle", "active"), values)
     }
 
     // ---- State JS→native -------------------------------------------------------
